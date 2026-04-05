@@ -113,11 +113,13 @@ typedef struct {
   size_t line;
   size_t column;
 
-  char *token;
+  char token[256];
 } Token;
 
 // TODO: implement this once we have made a bump arena allocator
-Token *token_new(TType ttype, size_t line, size_t column, char *token);
-void tokens_free(Token *tokens);
+void token_new(Token *token, TType ttype, size_t line, size_t column,
+               char *tok);
+void token_print(const Token token);
+void tokens_free(Token *tokens); // not sure if I need this
 
 #endif // TOKEN_H
