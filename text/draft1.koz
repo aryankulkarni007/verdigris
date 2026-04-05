@@ -1,0 +1,50 @@
+-- koz language draft
+
+struct Vec2 { x: float, y: float }
+
+enum Direction { Left, Right, Up, Down }
+
+enum State {
+    Moving(Direction),
+    Stationary
+}
+
+enum NetError {
+    NotFound(String),
+    Network(String)
+}
+
+interface Display {
+    display :: Self -> ()
+}
+
+display(s) :: State -> () {
+    match s {
+        Moving(Left) => "left".display(),
+        Moving(Right) => "right".display(),
+        Moving(Up) => "up".display(),
+        Moving(Down) => "down".display(),
+        Stationary => "stationary".display(),
+    }
+}
+
+@ Vec2 {
+    zero :: () -> Vec2 {
+        Vec2 { x = 0.0, y = 0.0 }
+    }
+    add(a, b) :: (Vec2, Vec2) -> Vec2 {
+        Vec2 { x = a.x + b.x, y = a.y + b.y }
+    }
+    distance(a, b) :: (Vec2, Vec2) -> float {
+        ((b.x - a.x) ** 2 + (b.y - a.y) ** 2) \*\* 0.5
+    }
+}
+
+main(argc, argv) :: (int, [string]) -> Result((), NetError) {
+    let a = Vec2.zero()
+    let b = Vec2 { x = 2.0, y = 2.0 }
+
+    let c: Vec2 = Vec2.add(a, b)
+
+    Vec2.distance(a, b).display()
+}
