@@ -45,9 +45,6 @@ static Keyword keywords[] = {
 
 static size_t keyword_count = sizeof(keywords) / sizeof(keywords[0]);
 
-// returns a pointer to the end of the current string
-// char* peek(char* src) { }
-
 char peek(Lexer *l) { return *l->pos; }
 
 char peek_next(Lexer *l) { return *(l->pos + 1); }
@@ -55,7 +52,6 @@ char peek_next(Lexer *l) { return *(l->pos + 1); }
 char advance(Lexer *l) {
   char current = peek(l);
 
-  // position logic
   if (*l->pos == '\n') {
     ++l->line;
     l->column = 1;
@@ -67,11 +63,9 @@ char advance(Lexer *l) {
   return current;
 }
 
-/// singleton pattern. dunno how stating that helps
 void lexer_new(Lexer *lexer, Source src) {
   lexer->line = 1;
   lexer->column = 1;
-
   lexer->file = src.buffer;
   lexer->start = lexer->pos = lexer->file;
 }
@@ -87,10 +81,9 @@ TType lookup(char *word) {
 void l_token_append(char *token, TType ttype, Arena *stream, Lexer *l) {
   Token *new = arena_allocate(stream, sizeof(Token));
   token_new(new, ttype, l->line, l->column, token);
-  l->start = l->pos; // push start forward
+  l->start = l->pos;
 }
 
-/// implement as a white space skipping lexer
 void lex(Arena *stream, Lexer *l) {
   while (*l->pos != '\0') {
     while (*l->pos == ' ' || *l->pos == '\n' || *l->pos == '\r' ||
@@ -104,12 +97,18 @@ void lex(Arena *stream, Lexer *l) {
     l->start = l->pos;
     char cur = advance(l);
 
-    // lex idents and keywords
     if (isalpha(cur) || cur == '_') {
       while (isalnum(*l->pos) || *l->pos == '_')
         advance(l);
 
       size_t len = l->pos - l->start;
+
+      if (len >= 256) {
+        fprintf(stderr, "%s:[%zu:%zu] error: token too long (max 255 chars)\n",
+                l->file, l->line, l->column);
+        exit(1);
+      }
+
       char tok[256];
       memcpy(tok, l->start, len);
       tok[len] = '\0';
@@ -123,6 +122,7 @@ void lex(Arena *stream, Lexer *l) {
       while (isdigit(*l->pos)) {
         advance(l);
       }
+
       if (*l->pos == '.' && isdigit(*(l->pos + 1))) {
         is_float = true;
         advance(l);
@@ -132,23 +132,27 @@ void lex(Arena *stream, Lexer *l) {
         }
       }
 
+      size_t len = l->pos - l->start;
+
+      if (len >= 256) {
+        fprintf(
+            stderr,
+            "%s:[%zu:%zu] error: numeric literal too long (max 255 chars)\n",
+            l->file, l->line, l->column);
+        exit(1);
+      }
+
+      char tok[256];
+      memcpy(tok, l->start, len);
+      tok[len] = '\0';
+
       if (!is_float) {
-        size_t len = l->pos - l->start;
-        char tok[256];
-        memcpy(tok, l->start, len);
-        tok[len] = '\0';
         l_token_append(tok, TOKEN_INT_LIT, stream, l);
       } else {
-        size_t len = l->pos - l->start;
-        char tok[256];
-        memcpy(tok, l->start, len);
-        tok[len] = '\0';
         l_token_append(tok, TOKEN_FLOAT_LIT, stream, l);
       }
     } else {
-      // handle symbols
       switch (cur) {
-      // single char case
       case '(':
         l_token_append("(", TOKEN_LPAREN, stream, l);
         break;
@@ -309,20 +313,99 @@ void lex(Arena *stream, Lexer *l) {
       case '?':
         l_token_append("?", TOKEN_QUESTION, stream, l);
         break;
+      case '\'': {
+        char tok[8] = {0};
+        size_t idx = 0;
+
+        if (peek(l) == '\'') {
+          fprintf(stderr, "%s:[%zu:%zu] error: empty character literal\n",
+                  l->file, l->line, l->column);
+          exit(1);
+        }
+
+        if (peek(l) == '\\') {
+          advance(l);
+          char esc = advance(l);
+          switch (esc) {
+          case 'n':
+            tok[idx++] = '\n';
+            break;
+          case 't':
+            tok[idx++] = '\t';
+            break;
+          case 'r':
+            tok[idx++] = '\r';
+            break;
+          case '0':
+            tok[idx++] = '\0';
+            break;
+          case '\\':
+            tok[idx++] = '\\';
+            break;
+          case '\'':
+            tok[idx++] = '\'';
+            break;
+          case '"':
+            tok[idx++] = '"';
+            break;
+          default:
+            fprintf(stderr,
+                    "%s:[%zu:%zu] error: unknown escape sequence '\\%c'\n",
+                    l->file, l->line, l->column, esc);
+            exit(1);
+          }
+        } else {
+          tok[idx++] = advance(l);
+        }
+
+        if (peek(l) == '\0') {
+          fprintf(stderr,
+                  "%s:[%zu:%zu] error: unterminated character literal\n",
+                  l->file, l->line, l->column);
+          exit(1);
+        }
+
+        if (peek(l) != '\'') {
+          fprintf(stderr,
+                  "%s:[%zu:%zu] error: expected closing quote for character "
+                  "literal\n",
+                  l->file, l->line, l->column);
+          exit(1);
+        }
+        advance(l);
+
+        tok[idx] = '\0';
+        l_token_append(tok, TOKEN_CHAR_LIT, stream, l);
+        break;
+      }
       case '"': {
         while (*l->pos != '"' && *l->pos != '\0')
           advance(l);
 
+        if (*l->pos == '\0') {
+          fprintf(stderr, "%s:[%zu:%zu] error: unterminated string literal\n",
+                  l->file, l->line, l->column);
+          exit(1);
+        }
+
         size_t len = l->pos - l->start - 1;
+
+        if (len >= 256) {
+          fprintf(
+              stderr,
+              "%s:[%zu:%zu] error: string literal too long (max 255 chars)\n",
+              l->file, l->line, l->column);
+          exit(1);
+        }
+
         char tok[256];
         memcpy(tok, l->start + 1, len);
         tok[len] = '\0';
-        advance(l); // move past last "
+        advance(l);
         l_token_append(tok, TOKEN_STRING_LIT, stream, l);
         break;
       }
       default:
-        // TODO: make SytaxErr struct and pretty print lexer error
         fprintf(stderr, "%s:[%zu:%zu] error: unexpected character '%c'\n",
                 l->file, l->line, l->column, cur);
         exit(1);

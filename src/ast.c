@@ -49,11 +49,26 @@ Expr *ast_expr_string(Arena *arena, Token token, char *value) {
   return node;
 }
 
+Expr *ast_expr_char(Arena *arena, Token token, char value) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_CHAR_LIT;
+  node->token = token;
+  node->as.char_val = value;
+  return node;
+}
+
 Expr *ast_expr_bool(Arena *arena, Token token, bool value) {
   Expr *node = arena_allocate(arena, sizeof(Expr));
   node->kind = E_BOOL_LIT;
   node->token = token;
   node->as.bool_val = value;
+  return node;
+}
+
+Expr *ast_expr_none(Arena *arena, Token token) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_NONE;
+  node->token = token;
   return node;
 }
 

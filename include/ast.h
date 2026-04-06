@@ -183,6 +183,7 @@ struct Expr {
     long int_val;
     double float_val;
     char *str_val;
+    char char_val;
     char *ident_name;
     bool bool_val;
 
@@ -313,7 +314,9 @@ Type *ast_type_array(Arena *arena, Token token, Type *element);
 Expr *ast_expr_int(Arena *arena, Token token, long value);
 Expr *ast_expr_float(Arena *arena, Token token, double value);
 Expr *ast_expr_string(Arena *arena, Token token, char *value);
+Expr *ast_expr_char(Arena *arena, Token token, char value);
 Expr *ast_expr_bool(Arena *arena, Token token, bool value);
+Expr *ast_expr_none(Arena *arena, Token token);
 Expr *ast_expr_ident(Arena *arena, Token token, char *name);
 Expr *ast_expr_binary(Arena *arena, Token op_token, Expr *left, Expr *right);
 Expr *ast_expr_unary(Arena *arena, Token op_token, Expr *operand);
