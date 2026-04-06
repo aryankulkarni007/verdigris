@@ -23,7 +23,7 @@ void *arena_allocate(Arena *arena, size_t size) {
   void *current = NULL;
   uintptr_t aligned = arena_align((size_t)arena->pos, sizeof(void *));
 
-  if (aligned + size <= (char *)arena->end) {
+  if ((char *)(aligned + size) <= (char *)arena->end) {
     arena->pos = (void *)aligned;
     current = (void *)arena->pos;
     arena->pos = (char *)arena->pos + size;

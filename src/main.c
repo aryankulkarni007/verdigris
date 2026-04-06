@@ -3,12 +3,9 @@
 #include <string.h>
 
 #include "../include/arena.h"
+#include "../include/lexer.h"
+#include "../include/main.h"
 #include "../include/token.h"
-
-typedef struct {
-  size_t file_size;
-  char *buffer;
-} Source;
 
 void print_usage(char *exec);
 Source file_handler(char *path);
@@ -40,7 +37,7 @@ Source file_handler(char *path) {
     exit(1);
   }
 
-  size_t bytes_read = fread(buffer, 1, file_size, file);
+  long bytes_read = fread(buffer, 1, file_size, file);
   if (bytes_read != file_size) {
     fprintf(stderr, "error: fread\n");
     exit(1);
@@ -57,16 +54,20 @@ int main(int argc, char *argv[]) {
   }
 
   Source src = file_handler(argv[1]);
-  printf("%s\n", src.buffer);
+  // printf("%s\n", src.buffer);
 
   Arena arena;
   // using file_size to guess the memory size needed
   Token *stream = malloc(src.file_size * sizeof(Token));
   arena_init(&arena, stream, src.file_size * sizeof(Token));
 
-  Token *new = arena_allocate(&arena, sizeof(Token));
-  token_new(new, TOKEN_IDENT, 0, 0, "x");
-  token_print(*new);
+  Lexer lexer;
+  lexer_new(&lexer, src);
+  lex(&arena, &lexer);
+
+  for (size_t i = 0; stream[i].ttype != TOKEN_EOF; ++i) {
+    token_print(&stream[i]);
+  }
 
   arena_reset(&arena);
   free(stream);
