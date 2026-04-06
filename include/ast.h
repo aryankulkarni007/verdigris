@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "arena.h"
 #include "token.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -157,7 +158,9 @@ typedef struct {
 
 struct Type {
   TypeKind kind;
+  Token token; // for line / col reporting
   union {
+    TType primitive;      // int, float,...
     char *name;           // T_NAME
     struct Type *element; // T_ARRAY
     struct {
@@ -301,4 +304,29 @@ void ast_print_stmt(Stmt *s, int indent, bool *last_mask, bool is_last);
 void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last);
 void ast_print_type(Type *t); // Types are usually printed inline
 
+// Type Builders
+Type *ast_type_primitive(Arena *arena, Token token, TType primitive);
+Type *ast_type_name(Arena *arena, Token token, char *name);
+Type *ast_type_array(Arena *arena, Token token, Type *element);
+
+// Expression Builders
+Expr *ast_expr_int(Arena *arena, Token token, long value);
+Expr *ast_expr_float(Arena *arena, Token token, double value);
+Expr *ast_expr_string(Arena *arena, Token token, char *value);
+Expr *ast_expr_bool(Arena *arena, Token token, bool value);
+Expr *ast_expr_ident(Arena *arena, Token token, char *name);
+Expr *ast_expr_binary(Arena *arena, Token op_token, Expr *left, Expr *right);
+Expr *ast_expr_unary(Arena *arena, Token op_token, Expr *operand);
+
+// Statement Builders
+Stmt *ast_stmt_let(Arena *arena, Token token, char *name, bool is_mut,
+                   Type *type_annotation, Expr *init);
+Stmt *ast_stmt_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
+                     Expr *tail);
+
+// Declaration Builders
+Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
+                      size_t field_count);
+Decl *ast_decl_func(Arena *arena, Token token, char *name, Param *params,
+                    size_t param_count, Type *return_type, Stmt *body);
 #endif // AST_H

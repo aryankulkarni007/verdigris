@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct {
@@ -322,8 +323,9 @@ void lex(Arena *stream, Lexer *l) {
       }
       default:
         // TODO: make SytaxErr struct and pretty print lexer error
-        fprintf(stderr, "unexpected char\n");
-        break;
+        fprintf(stderr, "%s:[%zu:%zu] error: unexpected character '%c'\n",
+                l->file, l->line, l->column, cur);
+        exit(1);
       }
     }
   }
