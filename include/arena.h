@@ -12,7 +12,6 @@ typedef struct {
 
 // for only tokens for now, so offset doesn't matter
 void arena_init(Arena *arena, void *buffer, size_t cap);
-static uintptr_t arena_align(uintptr_t pos, uintptr_t align);
 void *arena_allocate(Arena *arena, size_t size);
 void arena_reset(Arena *arena);
 

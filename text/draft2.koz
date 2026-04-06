@@ -1,0 +1,150 @@
+-- example.koz: lexer stress test
+
+-- structs
+struct Player { x: float, y: float, health: int, alive: bool }
+struct Bullet { x: float, y: float, speed: float }
+
+-- enums
+enum Team { Red, Blue }
+
+enum GameEvent {
+    PlayerMoved(Player),
+    PlayerDied(Player),
+    BulletFired(Bullet),
+    RoundOver
+}
+
+-- impl block
+@ Player {
+    new(x, y) :: (float, float) -> Player {
+        Player { x = x, y = y, health = 100, alive = true }
+    }
+
+    move(p, dx, dy) :: (Player, float, float) -> Player {
+        Player { x = p.x + dx, y = p.y + dy, health = p.health, alive = p.alive }
+    }
+
+    take_damage(p, amount) :: (Player, int) -> Player {
+        let new_health = p.health - amount
+        if new_health <= 0 {
+            Player { x = p.x, y = p.y, health = 0, alive = false }
+        } else {
+            Player { x = p.x, y = p.y, health = new_health, alive = p.alive }
+        }
+    }
+
+    is_alive(p) :: Player -> bool {
+        p.alive
+    }
+}
+
+-- free functions
+distance(a, b) :: (Player, Player) -> float {
+    ((b.x - a.x) ** 2 + (b.y - a.y) ** 2) ** 0.5
+}
+
+handle_event(e) :: GameEvent -> () {
+    match e {
+        PlayerMoved(p) => p.x.display(),
+        PlayerDied(p)  => "player died".display(),
+        BulletFired(b) => b.speed.display(),
+        RoundOver      => "round over".display(),
+    }
+}
+
+-- extern block
+extern {
+    log_event(msg) :: string -> ()
+}
+
+-- arithmetic and operators
+test_ops(x, y) :: (int, int) -> int {
+    let a = x + y
+    let b = x - y
+    let c = x * y
+    let d = x / y
+    let e = x % y
+    let f = x & y
+    let g = x | y
+    let h = x ^ y
+    let i = x << 2
+    let j = x >> 2
+    let mut k = 0
+    k += x
+    k -= y
+    k *= 2
+    k /= 1
+    k %= 3
+    k
+}
+
+-- ranges and collections
+test_ranges() :: () -> () {
+    let full  = 0..10
+    let incl  = 0..=10
+    let items: [int] = [1, 2, 3, 4, 5]
+    for x in items {
+        x.display()
+    }
+}
+
+-- control flow
+test_flow(n) :: int -> int {
+    let mut result = 0
+    let mut i = 0
+    while i < n {
+        if i % 2 == 0 {
+            result += i
+        } else {
+            result -= i
+        }
+        i += 1
+    }
+    loop {
+        break
+    }
+    return result
+}
+
+-- result and option
+test_result(x) :: int -> Result(int, Error) {
+    if x < 0 {
+        return Result.err(Error.NotFound("negative"))
+    }
+    Result.ok(x * 2)
+}
+
+test_option(x) :: int -> Option(int) {
+    if x == 0 {
+        none
+    } else {
+        some(x)
+    }
+}
+
+-- error propagation
+test_propagation(x) :: int -> Result(int, Error) {
+    let val = test_result(x)?
+    Result.ok(val + 1)
+}
+
+-- bitwise not and logical
+test_logical(a, b) :: (bool, bool) -> bool {
+    let x = a && b
+    let y = a || b
+    let z = !a
+    let w = ~0
+    x && y && z
+}
+
+-- main
+main(argc, argv) :: (int, [string]) -> Result((), Error) {
+    let p1 = Player.new(0.0, 0.0)
+    let p2 = Player.new(3.0, 4.0)
+    let d = distance(p1, p2)
+    let p3 = p1.take_damage(30)
+    let alive = p3.is_alive()
+    let e = GameEvent.PlayerMoved(p1)
+    handle_event(e)
+    d.display()
+}

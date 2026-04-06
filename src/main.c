@@ -9,6 +9,7 @@
 
 void print_usage(char *exec);
 Source file_handler(char *path);
+void run_ast_tests(void);
 
 /// WARNING: remember to free buffer
 void print_usage(char *exec) {
@@ -51,6 +52,12 @@ int main(int argc, char *argv[]) {
   if (argc < 2) {
     print_usage(argv[0]);
     return 1;
+  }
+
+  if (argc > 1 && strcmp(argv[1], "--test-ast") == 0) {
+    // Put your test_ast.c logic into a function called run_ast_tests()
+    run_ast_tests();
+    return 0;
   }
 
   Source src = file_handler(argv[1]);
