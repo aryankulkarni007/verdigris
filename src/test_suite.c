@@ -11,7 +11,7 @@ static Token mock_token(const char *lexeme) {
 }
 
 void run_ast_tests(void) {
-  printf("Starting Koz AST Visualizer Test...\n");
+  printf("AST Visualizer Test...\n");
   printf("==================================\n\n");
 
   // 1. Build Expression: 5 + y

@@ -11,6 +11,7 @@
 void print_usage(char *exec);
 Source file_handler(char *path);
 void run_ast_tests(void);
+void run_parser_tests(void);
 
 /// WARNING: remember to free buffer
 void print_usage(char *exec) {
@@ -58,6 +59,11 @@ int main(int argc, char *argv[]) {
   if (argc > 1 && strcmp(argv[1], "--test-ast") == 0) {
     // Put your test_ast.c logic into a function called run_ast_tests()
     run_ast_tests();
+    return 0;
+  }
+
+  if (argc > 1 && strcmp(argv[1], "--test-parser") == 0) {
+    run_parser_tests();
     return 0;
   }
 

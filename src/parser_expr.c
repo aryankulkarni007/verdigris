@@ -176,8 +176,8 @@ Expr *parse_block_expr(Parser *p, Arena *a) {
       exit(1);
     }
 
-    Stmt *stmt = parse_stmt(p, a);
-    local_stmts[stmt_count++] = stmt;
+    // TODO: Stmt *stmt = parse_stmt(p, a);
+    // local_stmts[stmt_count++] = stmt;
   }
 
   // Check for trailing expression (only if not already at '}')
@@ -275,7 +275,7 @@ Expr *parse_primary(Parser *p, Arena *a) {
 
   // block expression
   case TOKEN_LBRACE:
-    return parse_block_expr(p, a);
+    // return parse_block_expr(p, a);
 
   // array literal
   case TOKEN_LBRACK:
