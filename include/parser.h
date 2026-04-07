@@ -49,6 +49,8 @@ typedef enum {
   PREC_POSTFIX, // 12 - . [ ( ? (highest)
 } Precedence;
 
+Precedence get_precedence(TType type);
+
 typedef struct {
   Token *tokens;
   size_t pos;
@@ -76,6 +78,7 @@ Module *parse(Arena *arena, Parser *p);
 
 Expr *parse_expr(Parser *p, Arena *arena, Precedence min_prec);
 Expr *parse_primary(Parser *parser, Arena *arena);
+Expr *parse_infix(Parser *p, Arena *a, Expr *left, Token op);
 
 // parse expr helper
 Expr *parse_literal(Parser *parser, Arena *arena);
@@ -87,7 +90,7 @@ Expr *parse_if_expr(Parser *parser, Arena *arena);
 Expr *parse_match_expr(Parser *parser, Arena *arena);
 Expr *parse_unary_expr(Parser *parser, Arena *arena);
 
-// parse stmt helper
+// TODO: parse stmt helper
 Stmt *parse_stmt(Parser *p, Arena *a);
 Stmt *parse_let_stmt(Parser *p, Arena *a);
 Stmt *parse_while_stmt(Parser *p, Arena *a);

@@ -208,11 +208,19 @@ struct Expr {
       struct Expr **elements;
       size_t count;
     } array_init;
+
     struct {
       struct Expr *start;
       struct Expr *end;
       bool is_inclusive;
     } range;
+
+    struct {
+      struct Expr *site;
+      char *name;
+      struct Expr **args;
+      size_t arg_count;
+    } method;
 
     IfExpr if_expr;
     MatchExpr match_expr;
@@ -321,11 +329,23 @@ Expr *ast_expr_ident(Arena *arena, Token token, char *name);
 Expr *ast_expr_binary(Arena *arena, Token op_token, Expr *left, Expr *right);
 Expr *ast_expr_unary(Arena *arena, Token op_token, Expr *operand);
 
+Expr *ast_expr_access(Arena *arena, Token op_token, Expr *left, Token ident);
+Expr *ast_expr_index(Arena *arena, Token bracket_token, Expr *site,
+                     Expr *index);
+Expr *ast_expr_call(Arena *arena, Token token, Expr *callee, Expr **args,
+                    size_t arg_count);
+Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
+                     Expr *tail);
+
 // Statement Builders
 Stmt *ast_stmt_let(Arena *arena, Token token, char *name, bool is_mut,
                    Type *type_annotation, Expr *init);
 Stmt *ast_stmt_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
                      Expr *tail);
+Stmt *ast_stmt_break(Arena *arena, Token token);
+Stmt *ast_stmt_continue(Arena *arena, Token token);
+Stmt *ast_stmt_return(Arena *arena, Token token, Expr *value);
+Stmt *ast_stmt_expr(Arena *arena, Token token, Expr *expression);
 
 // Declaration Builders
 Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,

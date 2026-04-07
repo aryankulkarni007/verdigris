@@ -97,6 +97,46 @@ Expr *ast_expr_unary(Arena *arena, Token op_token, Expr *operand) {
   return node;
 }
 
+Expr *ast_expr_access(Arena *arena, Token op_token, Expr *left, Token ident) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_ACCESS;
+  node->token = op_token;
+  node->as.access.site = left;
+  node->as.access.name = ident.token;
+  return node;
+}
+
+Expr *ast_expr_index(Arena *arena, Token token, Expr *site, Expr *index) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_INDEX;
+  node->token = token;
+  node->as.index.site = site;
+  node->as.index.index = index;
+  return node;
+}
+
+Expr *ast_expr_call(Arena *arena, Token token, Expr *callee, Expr **args,
+                    size_t arg_count) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_CALL;
+  node->token = token;
+  node->as.call.callee = callee;
+  node->as.call.args = args;
+  node->as.call.arg_count = arg_count;
+  return node;
+}
+
+Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
+                     Expr *tail) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_BLOCK;
+  node->token = token;
+  node->as.block.statements = stmts;
+  node->as.block.stmt_count = stmt_count;
+  node->as.block.expr_final = tail;
+  return node;
+}
+
 Stmt *ast_stmt_let(Arena *arena, Token token, char *name, bool is_mut,
                    Type *type_annotation, Expr *init) {
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
@@ -117,6 +157,36 @@ Stmt *ast_stmt_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
   node->as.block.statements = stmts;
   node->as.block.stmt_count = stmt_count;
   node->as.block.expr_final = tail;
+  return node;
+}
+
+Stmt *ast_stmt_break(Arena *arena, Token token) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_BREAK;
+  node->token = token;
+  return node;
+}
+
+Stmt *ast_stmt_continue(Arena *arena, Token token) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_CONTINUE;
+  node->token = token;
+  return node;
+}
+
+Stmt *ast_stmt_return(Arena *arena, Token token, Expr *value) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_RETURN;
+  node->token = token;
+  node->as.return_value = value; // NULL if no value
+  return node;
+}
+
+Stmt *ast_stmt_expr(Arena *arena, Token token, Expr *expression) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_EXPR;
+  node->token = token;
+  node->as.expression = expression;
   return node;
 }
 
