@@ -255,13 +255,17 @@ struct Stmt {
     struct {
       Expr *condition;
       struct Stmt *body; // A S_BLOCK
-    } while_loop;
+    } _while;
 
     struct {
       char *iterator;
       Expr *iterable;
       struct Stmt *body;
-    } for_loop;
+    } _for;
+
+    struct {
+      struct Stmt *body;
+    } _loop;
 
     struct Expr *expression; // S_EXPR
     struct Expr *return_value;
@@ -346,10 +350,20 @@ Stmt *ast_stmt_break(Arena *arena, Token token);
 Stmt *ast_stmt_continue(Arena *arena, Token token);
 Stmt *ast_stmt_return(Arena *arena, Token token, Expr *value);
 Stmt *ast_stmt_expr(Arena *arena, Token token, Expr *expression);
+Stmt *ast_stmt_while(Arena *arena, Token token, Expr *condition, Stmt *block);
+Stmt *ast_stmt_loop(Arena *arena, Token token, Stmt *body);
+Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
+                   Stmt *body);
 
 // Declaration Builders
-Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
-                      size_t field_count);
+Decl *ast_decl_extern(Arena *arena, Token token, Decl **decls,
+                      size_t decl_count);
+Decl *ast_decl_impl(Arena *arena, Token token, Type *target_type,
+                    Decl **methods, size_t method_count);
 Decl *ast_decl_func(Arena *arena, Token token, char *name, Param *params,
                     size_t param_count, Type *return_type, Stmt *body);
+Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
+                      size_t field_count);
+Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
+                    size_t variant_count);
 #endif // AST_H
