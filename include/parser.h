@@ -72,6 +72,8 @@ typedef struct {
   }                                                                            \
   ADVANCE(p)
 
+Type *parse_type(Parser *p, Arena *a);
+
 // main functions
 void parser_new(Parser *parser, Token *stream, size_t count);
 Module *parse(Arena *arena, Parser *p);
@@ -101,11 +103,13 @@ Stmt *parse_break_stmt(Parser *p, Arena *a);
 Stmt *parse_continue_stmt(Parser *p, Arena *a);
 Stmt *parse_block_stmt(Parser *p, Arena *a);
 Stmt *ast_stmt_expr(Arena *a, Token token, Expr *e); // you need this builder
-// S_BLOCK, different from block e;
 
-// Token current(Parser *p);
-// Token peek(Parser *p);
-// Token advance(Parser *p);
-// void expect(Parser *p, TType type, const char *msg);
+// Module and declarations
+Decl *parse_decl(Parser *p, Arena *a);
+Decl *parse_struct_decl(Parser *p, Arena *a);
+Decl *parse_enum_decl(Parser *p, Arena *a);
+Decl *parse_func_decl(Parser *p, Arena *a);
+Decl *parse_impl_decl(Parser *p, Arena *a);
+Decl *parse_extern_decl(Parser *p, Arena *a);
 
 #endif // PARSER_H
