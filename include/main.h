@@ -8,4 +8,7 @@ typedef struct {
   char *buffer;
 } Source;
 
+void run_ast_tests(void);
+void run_parser_tests(void);
+
 #endif //  MAIN_H

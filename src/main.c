@@ -10,8 +10,7 @@
 
 void print_usage(char *exec);
 Source file_handler(char *path);
-void run_ast_tests(void);
-void run_parser_tests(void);
+void run_all_tests(void);
 
 /// WARNING: remember to free buffer
 void print_usage(char *exec) {
@@ -50,28 +49,26 @@ Source file_handler(char *path) {
   return (Source){.file_size = (size_t)file_size, .buffer = buffer};
 }
 
+void run_all_tests(void) {
+  run_ast_tests();
+  run_parser_tests();
+}
+
 int main(int argc, char *argv[]) {
+  if (argc > 1 && strcmp(argv[1], "--test") == 0) {
+    run_all_tests();
+    return 0;
+  }
+
+  // normal operation requires a file
   if (argc < 2) {
     print_usage(argv[0]);
     return 1;
   }
 
-  if (argc > 1 && strcmp(argv[1], "--test-ast") == 0) {
-    // Put your test_ast.c logic into a function called run_ast_tests()
-    run_ast_tests();
-    return 0;
-  }
-
-  if (argc > 1 && strcmp(argv[1], "--test-parser") == 0) {
-    run_parser_tests();
-    return 0;
-  }
-
   Source src = file_handler(argv[1]);
-  // printf("%s\n", src.buffer);
 
   Arena token_arena;
-  // using file_size to guess the memory size needed
   Token *stream = malloc(src.file_size * sizeof(Token));
   arena_init(&token_arena, stream, src.file_size * sizeof(Token));
 
@@ -80,18 +77,13 @@ int main(int argc, char *argv[]) {
   lex(&token_arena, &lexer);
 
   size_t token_count = 0;
-  for (token_count = 0; stream[token_count].ttype != TOKEN_EOF; ++token_count) {
-    token_print(&stream[token_count]);
+  while (stream[token_count].ttype != TOKEN_EOF) {
+    token_count++;
   }
 
-  // TODO: comment the above out and uncomment this once we have implemented
-  // parsing
-
-  // while (stream[token_count].ttype != TOKEN_EOF) token_count++;
-
-  // new arena for ast
+  // AST arena
   Arena ast_arena;
-  size_t ast_size = src.file_size * 8; // rough guesstimate
+  size_t ast_size = src.file_size * 32;
   void *ast_buffer = malloc(ast_size);
   arena_init(&ast_arena, ast_buffer, ast_size);
 

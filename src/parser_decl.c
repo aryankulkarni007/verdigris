@@ -5,7 +5,7 @@
 
 Decl *parse_extern_decl(Parser *p, Arena *a) {
   Token extern_token = CURRENT(p);
-  ADVANCE(p); // consume 'extern'
+  ADVANCE(p);
 
   EXPECT(p, TOKEN_LBRACE, "expected '{' after extern");
 
@@ -13,14 +13,12 @@ Decl *parse_extern_decl(Parser *p, Arena *a) {
   size_t decl_count = 0;
 
   while (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
-    // parse_func_decl will see no '{' and set body = NULL
     Decl *func = parse_func_decl(p, a);
     local_decls[decl_count++] = func;
   }
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after extern block");
 
-  // Copy to arena
   Decl **decls = arena_allocate(a, decl_count * sizeof(Decl *));
   for (size_t i = 0; i < decl_count; ++i) {
     decls[i] = local_decls[i];
@@ -54,16 +52,15 @@ Decl *parse_impl_decl(Parser *p, Arena *a) {
 }
 
 Decl *parse_func_decl(Parser *p, Arena *a) {
-  // function name
   Token func_token = CURRENT(p);
   if (func_token.ttype != TOKEN_IDENT) {
-    fprintf(stderr, "error: expected function name\n");
+    fprintf(stderr, "error at %zu:%zu: expected function name, got '%s'\n",
+            func_token.line, func_token.column, func_token.token);
     exit(1);
   }
   char *func_name = func_token.token;
-  ADVANCE(p); // consume name
+  ADVANCE(p);
 
-  // parameter names
   EXPECT(p, TOKEN_LPAREN, "expected '(' after function name");
 
   char *local_names[256];
@@ -72,23 +69,22 @@ Decl *parse_func_decl(Parser *p, Arena *a) {
   if (CURRENT(p).ttype != TOKEN_RPAREN) {
     while (1) {
       if (CURRENT(p).ttype != TOKEN_IDENT) {
-        fprintf(stderr, "error: expected parameter name\n");
+        fprintf(stderr, "error at %zu:%zu: expected parameter name, got '%s'\n",
+                CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
         exit(1);
       }
       local_names[name_count++] = CURRENT(p).token;
-      ADVANCE(p); // consume name
+      ADVANCE(p);
 
       if (CURRENT(p).ttype == TOKEN_RPAREN)
         break;
       EXPECT(p, TOKEN_COMMA, "expected ',' between parameters");
     }
   }
-  ADVANCE(p); // consume ')'
+  ADVANCE(p);
 
-  // double colon
   EXPECT(p, TOKEN_CCOLON, "expected '::' after parameter list");
 
-  // parameter types
   EXPECT(p, TOKEN_LPAREN, "expected '(' for parameter types");
 
   Type *local_types[256];
@@ -103,26 +99,24 @@ Decl *parse_func_decl(Parser *p, Arena *a) {
       EXPECT(p, TOKEN_COMMA, "expected ',' between parameter types");
     }
   }
-  ADVANCE(p); // consume ')'
+  ADVANCE(p);
 
-  // check counts match
   if (name_count != type_count) {
-    fprintf(stderr, "error: parameter name count (%zu) != type count (%zu)\n",
-            name_count, type_count);
+    fprintf(
+        stderr,
+        "error at %zu:%zu: parameter name count (%zu) != type count (%zu)\n",
+        func_token.line, func_token.column, name_count, type_count);
     exit(1);
   }
 
-  // return type
   EXPECT(p, TOKEN_ARROW, "expected '->' before return type");
   Type *return_type = parse_type(p, a);
 
-  // body (optional — if no '{', this is a signature only)
   Stmt *body = NULL;
   if (CURRENT(p).ttype == TOKEN_LBRACE) {
     body = parse_block_stmt(p, a);
   }
 
-  // pair names and types into param array
   Param *params = arena_allocate(a, name_count * sizeof(Param));
   for (size_t i = 0; i < name_count; i++) {
     params[i].name = local_names[i];
@@ -137,7 +131,9 @@ Decl *parse_enum_decl(Parser *p, Arena *a) {
   Token enum_token = CURRENT(p);
   ADVANCE(p);
   if (CURRENT(p).ttype != TOKEN_IDENT) {
-    fprintf(stderr, "error: expected enum name after 'enum'\n");
+    fprintf(stderr,
+            "error at %zu:%zu: expected enum name after 'enum', got '%s'\n",
+            CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
     exit(1);
   }
 
@@ -152,11 +148,13 @@ Decl *parse_enum_decl(Parser *p, Arena *a) {
 
   while (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
     if (variant_count >= 256) {
-      fprintf(stderr, "error: enum exceeds 256 variants\n");
+      fprintf(stderr, "error at %zu:%zu: enum exceeds 256 variants\n",
+              enum_token.line, enum_token.column);
       exit(1);
     }
     if (CURRENT(p).ttype != TOKEN_IDENT) {
-      fprintf(stderr, "error: expected variant name\n");
+      fprintf(stderr, "error at %zu:%zu: expected variant name, got '%s'\n",
+              CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
       exit(1);
     }
 
@@ -176,14 +174,14 @@ Decl *parse_enum_decl(Parser *p, Arena *a) {
     if (CURRENT(p).ttype == TOKEN_COMMA) {
       ADVANCE(p);
     } else if (CURRENT(p).ttype != TOKEN_RBRACE) {
-      fprintf(stderr, "error: expected ',' or '}' after variant\n");
+      fprintf(stderr, "error at %zu:%zu: expected ',' or '}' after variant\n",
+              CURRENT(p).line, CURRENT(p).column);
       exit(1);
     }
   }
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after enum body");
 
-  // Copy variants to arena
   Variant *variants = arena_allocate(a, variant_count * sizeof(Variant));
   for (size_t i = 0; i < variant_count; i++) {
     variants[i] = local_variants[i];
@@ -197,7 +195,9 @@ Decl *parse_struct_decl(Parser *p, Arena *a) {
   ADVANCE(p);
 
   if (CURRENT(p).ttype != TOKEN_IDENT) {
-    fprintf(stderr, "error: expected struct name after 'struct'\n");
+    fprintf(stderr,
+            "error at %zu:%zu: expected struct name after 'struct', got '%s'\n",
+            CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
     exit(1);
   }
   Token name_token = CURRENT(p);
@@ -211,12 +211,14 @@ Decl *parse_struct_decl(Parser *p, Arena *a) {
 
   while (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
     if (field_count >= 256) {
-      fprintf(stderr, "error: struct exceeds 256 fields\n");
+      fprintf(stderr, "error at %zu:%zu: struct exceeds 256 fields\n",
+              struct_token.line, struct_token.column);
       exit(1);
     }
 
     if (CURRENT(p).ttype != TOKEN_IDENT) {
-      fprintf(stderr, "error: expected field name\n");
+      fprintf(stderr, "error at %zu:%zu: expected field name, got '%s'\n",
+              CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
       exit(1);
     }
     Token field_name = CURRENT(p);
@@ -233,17 +235,60 @@ Decl *parse_struct_decl(Parser *p, Arena *a) {
     if (CURRENT(p).ttype == TOKEN_COMMA) {
       ADVANCE(p);
     } else if (CURRENT(p).ttype != TOKEN_RBRACE) {
-      fprintf(stderr, "error: expected ',' or '}' after field\n");
+      fprintf(stderr, "error at %zu:%zu: expected ',' or '}' after field\n",
+              CURRENT(p).line, CURRENT(p).column);
       exit(1);
     }
   }
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after struct body");
 
-  // copy fields to arena
   Field *fields = arena_allocate(a, field_count * sizeof(Field));
   for (size_t i = 0; i < field_count; i++)
     fields[i] = local_fields[i];
 
   return ast_decl_struct(a, struct_token, name, fields, field_count);
+}
+
+Decl *parse_decl(Parser *p, Arena *a) {
+  switch (CURRENT(p).ttype) {
+  case TOKEN_STRUCT:
+    return parse_struct_decl(p, a);
+  case TOKEN_ENUM:
+    return parse_enum_decl(p, a);
+  case TOKEN_IMPL:
+    return parse_impl_decl(p, a);
+  case TOKEN_EXTERN:
+    return parse_extern_decl(p, a);
+  case TOKEN_IDENT:
+    return parse_func_decl(p, a);
+  default:
+    fprintf(stderr, "error at %zu:%zu: unexpected token '%s' in declaration\n",
+            CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
+    exit(1);
+  }
+}
+
+Module *parse(Arena *arena, Parser *p) {
+  Decl *local_decls[1024];
+  size_t decl_count = 0;
+
+  while (!IS_AT_END(p)) {
+    if (decl_count >= 1024) {
+      fprintf(stderr, "error: module exceeds 1024 declarations\n");
+      exit(1);
+    }
+    Decl *decl = parse_decl(p, arena);
+    local_decls[decl_count++] = decl;
+  }
+
+  Decl **decls = arena_allocate(arena, decl_count * sizeof(Decl *));
+  for (size_t i = 0; i < decl_count; i++) {
+    decls[i] = local_decls[i];
+  }
+
+  Module *mod = arena_allocate(arena, sizeof(Module));
+  mod->declarations = decls;
+  mod->count = decl_count;
+  return mod;
 }

@@ -258,6 +258,7 @@ Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
   Decl *node = arena_allocate(arena, sizeof(Decl));
   node->kind = D_ENUM;
   node->token = token;
+  node->as._enum.name = name;
   node->as._enum.variants = variants;
   node->as._enum.variant_count = variant_count;
   return node;

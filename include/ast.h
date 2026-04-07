@@ -65,11 +65,10 @@ typedef struct Decl Decl;
 #define DECL_KINDS(X)                                                          \
   X(D_STRUCT, "StructDecl")                                                    \
   X(D_ENUM, "EnumDecl")                                                        \
-  X(D_FUNC, "FuncDecl")   /* covers free functions and methods */              \
-  X(D_IMPL, "ImplDecl")   /* @ Player { ... } */                               \
-  X(D_EXTERN, "Extern")   /* extern { ... } */                                 \
-  X(D_TYPE, "TypeAlias")  /* type aliases */                                   \
-  X(D_PRIVATE, "Private") /* visibility modifier wrapper */
+  X(D_FUNC, "FuncDecl")  /* covers free functions and methods */               \
+  X(D_IMPL, "ImplDecl")  /* @ Player { ... } */                                \
+  X(D_EXTERN, "Extern")  /* extern { ... } */                                  \
+  X(D_TYPE, "TypeAlias") /* type aliases */
 
 // --- ENUM GENERATION ---
 
@@ -239,11 +238,13 @@ struct Stmt {
       Expr *init;
     } let_binding;
 
+    // TODO: implement assignment statements
     struct {
       Expr *target; // for x.y = ...
       Expr *value;
     } assign;
 
+    // TODO: implement compound assignment statements
     struct {
       Token op; // Store the += or -= token here
       Expr *target;
@@ -280,7 +281,6 @@ struct Decl {
     struct { char *name; Field *fields; size_t field_count; } _struct;
     struct { char *name; Variant *variants; size_t variant_count; } _enum;
     struct { char *alias_name; Type *target; } type_alias;
-    struct { struct Decl *inner; bool is_pub; } visibility;
 
     FuncDecl function;
     ImplDecl impl;
@@ -341,6 +341,26 @@ Expr *ast_expr_call(Arena *arena, Token token, Expr *callee, Expr **args,
 Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
                      Expr *tail);
 
+// TODO: array literal builder
+// Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t
+// count);
+
+// TODO: struct literal builder
+// Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name, FieldInit
+// *fields, size_t field_count);
+
+// TODO: range builder
+// Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end, bool
+// is_inclusive);
+
+// TODO: if expression builder
+// Expr *ast_expr_if(Arena *arena, Token token, Expr *condition, Expr
+// *then_expr, Expr *else_expr);
+
+// TODO: match expression builder
+// Expr *ast_expr_match(Arena *arena, Token token, Expr *target, MatchArm *arms,
+// size_t arm_count);
+
 // Statement Builders
 Stmt *ast_stmt_let(Arena *arena, Token token, char *name, bool is_mut,
                    Type *type_annotation, Expr *init);
@@ -355,6 +375,14 @@ Stmt *ast_stmt_loop(Arena *arena, Token token, Stmt *body);
 Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
                    Stmt *body);
 
+// TODO: assignment statement builders
+// Stmt *ast_stmt_assign(Arena *arena, Token token, Expr *target, Expr *value);
+// Stmt *ast_stmt_op_assign(Arena *arena, Token op_token, Expr *target, Expr
+// *value);
+
+// TODO: import statement builder
+// Stmt *ast_stmt_import(Arena *arena, Token token, char *path);
+
 // Declaration Builders
 Decl *ast_decl_extern(Arena *arena, Token token, Decl **decls,
                       size_t decl_count);
@@ -366,4 +394,9 @@ Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
                       size_t field_count);
 Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
                     size_t variant_count);
+
+// TODO: type alias builder
+// Decl *ast_decl_type_alias(Arena *arena, Token token, char *alias_name, Type
+// *target);
+
 #endif // AST_H

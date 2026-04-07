@@ -1,32 +1,6 @@
 #include "../include/ast.h"
 #include "../include/parser.h"
-<<<<<<< HEAD
 
-// Stmt *parse_stmt(Parser *p, Arena *a) {
-//   switch (CURRENT(p).ttype) {
-//   case TOKEN_LET:
-//     return parse_let_stmt(p, a);
-//   case TOKEN_WHILE:
-//     return parse_while_stmt(p, a);
-//   case TOKEN_FOR:
-//     return parse_for_stmt(p, a);
-//   case TOKEN_LOOP:
-//     return parse_loop_stmt(p, a);
-//   case TOKEN_RETURN:
-//     return parse_return_stmt(p, a);
-//   case TOKEN_BREAK:
-//     return parse_break_stmt(p, a);
-//   case TOKEN_CONTINUE:
-//     return parse_continue_stmt(p, a);
-//   case TOKEN_LBRACE:
-//     return parse_block_stmt(p, a); // S_BLOCK, different from block expr
-//   default: {
-//     Expr *e = parse_expr(p, a, PREC_NONE);
-//     return ast_stmt_expr(a, CURRENT(p), e);
-//   }
-//   }
-// }
-=======
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +37,8 @@ Stmt *parse_for_stmt(Parser *p, Arena *a) {
   ADVANCE(p);
 
   if (CURRENT(p).ttype != TOKEN_IDENT) {
-    fprintf(stderr, "error: expected identifier after 'for'\n");
+    fprintf(stderr, "error at %zu:%zu: expected identifier after 'for'\n",
+            CURRENT(p).line, CURRENT(p).column);
     exit(1);
   }
   Token ident_token = CURRENT(p);
@@ -88,7 +63,8 @@ Stmt *parse_let_stmt(Parser *p, Arena *a) {
     ADVANCE(p);
   }
   if (CURRENT(p).ttype != TOKEN_IDENT) {
-    fprintf(stderr, "error: expected identifier after let\n");
+    fprintf(stderr, "error at %zu:%zu: expected identifier after let\n",
+            CURRENT(p).line, CURRENT(p).column);
     exit(1);
   }
   Token ident = CURRENT(p);
@@ -133,7 +109,8 @@ Stmt *parse_block_stmt(Parser *p, Arena *a) {
   // Parse statements until we hit '}' or EOF
   while (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
     if (stmt_count >= 1024) {
-      fprintf(stderr, "error: block exceeds 1024 statements\n");
+      fprintf(stderr, "error at %zu:%zu: block exceeds 1024 statements\n",
+              start.line, start.column);
       exit(1);
     }
 
@@ -166,32 +143,31 @@ Stmt *parse_break_stmt(Parser *p, Arena *a) {
 }
 
 Type *parse_type(Parser *p, Arena *a) {
-  Token tok = CURRENT(p);
+  Token token = CURRENT(p);
 
-  switch (tok.ttype) {
+  switch (token.ttype) {
   case TOKEN_TINT:
   case TOKEN_TFLOAT:
   case TOKEN_TBOOL:
   case TOKEN_TSTRING:
   case TOKEN_TCHAR:
     ADVANCE(p);
-    return ast_type_primitive(a, tok, tok.ttype);
+    return ast_type_primitive(a, token, token.ttype);
 
   case TOKEN_IDENT:
     ADVANCE(p);
-    return ast_type_name(a, tok, tok.token);
+    return ast_type_name(a, token, token.token);
 
   case TOKEN_LBRACK:
     // Array type [T]
     ADVANCE(p); // consume '['
     Type *element = parse_type(p, a);
     EXPECT(p, TOKEN_RBRACK, "expected ']' after array element type");
-    return ast_type_array(a, tok, element);
+    return ast_type_array(a, token, element);
 
   default:
-    fprintf(stderr, "error: expected type, got '%s' at %zu:%zu\n", tok.token,
-            tok.line, tok.column);
+    fprintf(stderr, "error at %zu:%zu: expected type, got '%s'\n", token.line,
+            token.column, token.token);
     exit(1);
   }
 }
->>>>>>> feature/parser

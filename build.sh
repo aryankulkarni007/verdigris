@@ -8,5 +8,11 @@ CC="${CC:-cc}"
 DEBUG_FLAGS="-g -fsanitize=address,undefined"
 WARN_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wstrict-prototypes"
 
-$CC src/*.c -Iinclude $WARN_FLAGS $DEBUG_FLAGS -o "$PROJECT_NAME" &&
-./"$PROJECT_NAME" "$@"
+# optionally include tests
+if [[ "$*" == *"--test"* ]]; then
+    $CC src/*.c tests/*.c -Iinclude $WARN_FLAGS $DEBUG_FLAGS -o "$PROJECT_NAME" &&
+    ./"$PROJECT_NAME" "$@"
+else
+    $CC src/*.c -Iinclude $WARN_FLAGS $DEBUG_FLAGS -o "$PROJECT_NAME" &&
+    ./"$PROJECT_NAME" "$@"
+fi

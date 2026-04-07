@@ -1,100 +1,433 @@
-#include "../include/lexer.h"
-#include "../include/parser.h"
+#include "../include/ast.h"
 #include <stdio.h>
-#include <string.h>
 
-// Helper: parse source into a module (for testing expressions, wrap in dummy
-// function)
-static Module *parse_source_to_module(Arena *arena, const char *source) {
-  // Tokenize
-  Source src = {.buffer = (char *)source, .file_size = strlen(source)};
-
-  // Token arena
-  Arena token_arena;
-  char token_buf[4096];
-  arena_init(&token_arena, token_buf, sizeof(token_buf));
-
-  Lexer lexer;
-  lexer_new(&lexer, src);
-  lex(&token_arena, &lexer);
-
-  Token *stream = token_arena.start;
-  size_t token_count = 0;
-  while (stream[token_count].ttype != TOKEN_EOF)
-    token_count++;
-
-  // Parse
-  Parser parser;
-  parser_new(&parser, stream, token_count);
-
-  // For expressions, wrap in a function body for testing
-  // Or just parse expression directly and print
-  return NULL; // TODO
+const char *type_kind_to_str(TypeKind k) {
+  switch (k) {
+    // clang-format off
+#define AS_CASE(kind, name) case kind: return name;
+    // clang-format on
+    TYPE_KINDS(AS_CASE)
+#undef AS_CASE
+  default:
+    return "UnknownType";
+  }
 }
 
-// Simple test: parse expression and print
-void test_parse_expr(const char *name, const char *source) {
-  printf("\n=== Test: %s ===\n", name);
-  printf("Source: %s\n", source);
+const char *expr_kind_to_str(ExprKind k) {
+  switch (k) {
+    // clang-format off
+#define AS_CASE(kind, name) case kind: return name;
+    // clang-format on
+    EXPR_KINDS(AS_CASE)
+#undef AS_CASE
+  default:
+    return "UnknownExpr";
+  }
+}
 
-  // Token arena
-  Arena token_arena;
-  char token_buf[4096];
-  arena_init(&token_arena, token_buf, sizeof(token_buf));
+const char *stmt_kind_to_str(StmtKind k) {
+  switch (k) {
+    // clang-format off
+#define AS_CASE(kind, name) case kind: return name;
+    // clang-format on
+    STMT_KINDS(AS_CASE)
+#undef AS_CASE
+  default:
+    return "UnknownStmt";
+  }
+}
 
-  // Parse source
-  Source src = {.buffer = (char *)source, .file_size = strlen(source)};
-  Lexer lexer;
-  lexer_new(&lexer, src);
-  lex(&token_arena, &lexer);
+const char *decl_kind_to_str(DeclKind k) {
+  switch (k) {
+    // clang-format off
+#define AS_CASE(kind, name) case kind: return name;
+    // clang-format on
+    DECL_KINDS(AS_CASE)
+#undef AS_CASE
+  default:
+    return "UnknownDecl";
+  }
+}
 
-  Token *stream = token_arena.start;
-  size_t token_count = 0;
-  while (stream[token_count].ttype != TOKEN_EOF)
-    token_count++;
+// Koz Aesthetic Palette: Ghostty Red Planet Edition
+#define KGRN                                                                   \
+  "\x1B[38;5;167m" // Decls: Terracotta/Deep Red (Function/Struct names)
+#define KBLU "\x1B[38;5;209m" // Stmts: Coral/Orange (Let, While, If)
+#define KMAG "\x1B[38;5;216m" // Exprs: Salmon/Light Orange (Binary Ops, Calls)
+#define KCYN "\x1B[38;5;223m" // Types: Sand/Cream (Int, Float, Player)
+#define KYEL "\x1B[38;5;221m" // Literals: Soft Gold (Numbers, Strings)
+#define KGRY "\x1B[38;5;240m" // Connectors: Dust/Dark Gray (│ ├── └──)
+#define KNRM "\x1B[0m"        // Reset
 
-  // AST arena
-  Arena ast_arena;
-  char ast_buf[16384];
-  arena_init(&ast_arena, ast_buf, sizeof(ast_buf));
+// Helper: Draws the vertical pipes for nesting
+static void print_prefix(int indent, bool *last_mask) {
+  for (int i = 0; i < indent - 1; i++) {
+    if (last_mask[i])
+      printf("    ");
+    else
+      printf(KGRY "│   " KNRM);
+  }
+}
 
-  Parser parser;
-  parser_new(&parser, stream, token_count);
+// Helper: Draws the branch connector
+static void print_branch(int indent, bool *last_mask, bool is_last) {
+  print_prefix(indent, last_mask);
+  if (indent > 0) {
+    printf(KGRY "%s" KNRM, is_last ? "└── " : "├── ");
+  }
+}
 
-  Expr *expr = parse_expr(&parser, &ast_arena, PREC_NONE);
+void ast_print_type(Type *t) {
+  if (!t) {
+    printf(KCYN "infer" KNRM);
+    return;
+  }
 
-  // Wrap expression in a dummy statement and module for printing
-  Stmt *expr_stmt = ast_stmt_expr(&ast_arena, expr->token, expr);
-  Stmt *block_stmts[] = {expr_stmt};
-  Block block = {
-      .statements = block_stmts, .stmt_count = 1, .expr_final = NULL};
-  Stmt *func_body =
-      ast_stmt_block(&ast_arena, expr->token, block_stmts, 1, NULL);
+  switch (t->kind) {
+  case T_PRIMITIVE:
+    switch (t->as.primitive) {
+    case TOKEN_TINT:
+      printf(KCYN "int" KNRM);
+      break;
+    case TOKEN_TFLOAT:
+      printf(KCYN "float" KNRM);
+      break;
+    case TOKEN_TBOOL:
+      printf(KCYN "bool" KNRM);
+      break;
+    case TOKEN_TSTRING:
+      printf(KCYN "string" KNRM);
+      break;
+    case TOKEN_TCHAR:
+      printf(KCYN "char" KNRM);
+      break;
+    default:
+      printf(KCYN "primitive" KNRM);
+      break;
+    }
+    break;
 
-  Decl *func =
-      ast_decl_func(&ast_arena, expr->token, "test", NULL, 0, NULL, func_body);
-  Decl *decls[] = {func};
+  case T_NAME:
+    printf(KCYN "%s" KNRM, t->as.name);
+    break;
+
+  case T_ARRAY:
+    printf(KCYN "[" KNRM);
+    ast_print_type(t->as.element);
+    printf(KCYN "]" KNRM);
+    break;
+
+  case T_GENERIC:
+    printf(KCYN "%s" KNRM, t->as.generic.base);
+    printf(KCYN "<" KNRM);
+    for (size_t i = 0; i < t->as.generic.param_count; i++) {
+      if (i > 0)
+        printf(KCYN ", " KNRM);
+      ast_print_type(t->as.generic.params[i]);
+    }
+    printf(KCYN ">" KNRM);
+    break;
+
+  case T_FUNCTION:
+    printf(KCYN "(" KNRM);
+    for (size_t i = 0; i < t->as.function.param_count; i++) {
+      if (i > 0)
+        printf(KCYN ", " KNRM);
+      ast_print_type(t->as.function.params[i]);
+    }
+    printf(KCYN ") -> " KNRM);
+    ast_print_type(t->as.function.return_type);
+    break;
+
+  case T_UNIT:
+    printf(KCYN "()" KNRM);
+    break;
+
+  default:
+    printf(KCYN "%s" KNRM, type_kind_to_str(t->kind));
+    break;
+  }
+}
+
+void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last) {
+  if (!e)
+    return;
+  last_mask[indent - 1] = is_last;
+  print_branch(indent, last_mask, is_last);
+
+  printf("[" KMAG "%s" KNRM "]", expr_kind_to_str(e->kind));
+
+  switch (e->kind) {
+  case E_INT_LIT:
+    printf(": " KYEL "%ld" KNRM "\n", e->as.int_val);
+    break;
+  case E_FLOAT_LIT:
+    printf(": " KYEL "%f" KNRM "\n", e->as.float_val);
+    break;
+  case E_STR_LIT:
+    printf(": " KYEL "\"%s\"" KNRM "\n", e->as.str_val);
+    break;
+  case E_BOOL_LIT:
+    printf(": " KYEL "%s" KNRM "\n", e->as.bool_val ? "true" : "false");
+    break;
+  case E_IDENT:
+    printf(": " KNRM "%s\n", e->as.ident_name);
+    break;
+
+  case E_BINARY:
+    printf(" (" KMAG "%s" KNRM ")\n", e->token.token);
+    ast_print_expr(e->as.binary.left, indent + 1, last_mask, false);
+    ast_print_expr(e->as.binary.right, indent + 1, last_mask, true);
+    break;
+
+  case E_UNARY:
+    printf(" (" KMAG "%s" KNRM ")\n", e->token.token);
+    ast_print_expr(e->as.unary.operand, indent + 1, last_mask, true);
+    break;
+
+  case E_CALL:
+    printf("\n");
+    ast_print_expr(e->as.call.callee, indent + 1, last_mask,
+                   e->as.call.arg_count == 0);
+    for (size_t i = 0; i < e->as.call.arg_count; i++) {
+      ast_print_expr(e->as.call.args[i], indent + 1, last_mask,
+                     i == e->as.call.arg_count - 1);
+    }
+    break;
+
+  case E_BLOCK:
+    printf("\n");
+    Block b = e->as.block;
+    for (size_t i = 0; i < b.stmt_count; i++) {
+      bool last = (i == b.stmt_count - 1) && (b.expr_final == NULL);
+      ast_print_stmt(b.statements[i], indent + 1, last_mask, last);
+    }
+    if (b.expr_final)
+      ast_print_expr(b.expr_final, indent + 1, last_mask, true);
+    break;
+
+  case E_ACCESS:
+    printf("\n");
+    ast_print_expr(e->as.access.site, indent + 1, last_mask, false);
+    print_prefix(indent + 1, last_mask);
+    printf(KGRY "└── " KNRM ".%s\n", e->as.access.name);
+    break;
+
+  case E_INDEX:
+    printf("\n");
+    ast_print_expr(e->as.index.site, indent + 1, last_mask, false);
+    ast_print_expr(e->as.index.index, indent + 1, last_mask, true);
+    break;
+
+  case E_METHOD:
+    printf("\n");
+    ast_print_expr(e->as.method.site, indent + 1, last_mask, false);
+    print_prefix(indent + 1, last_mask);
+    printf(KGRY "├── " KNRM ".%s\n", e->as.method.name);
+    for (size_t i = 0; i < e->as.method.arg_count; i++) {
+      bool last = (i == e->as.method.arg_count - 1);
+      ast_print_expr(e->as.method.args[i], indent + 1, last_mask, last);
+    }
+    break;
+
+  case E_RANGE:
+    printf(" (%s)\n", e->as.range.is_inclusive ? "..=" : "..");
+    ast_print_expr(e->as.range.start, indent + 1, last_mask, false);
+    ast_print_expr(e->as.range.end, indent + 1, last_mask, true);
+    break;
+
+  case E_NONE:
+    printf(": " KYEL "none" KNRM "\n");
+    break;
+  default:
+    printf("\n");
+    break;
+  }
+}
+
+void ast_print_stmt(Stmt *s, int indent, bool *last_mask, bool is_last) {
+  if (!s)
+    return;
+  last_mask[indent - 1] = is_last;
+  print_branch(indent, last_mask, is_last);
+
+  printf("[" KBLU "%s" KNRM "]", stmt_kind_to_str(s->kind));
+
+  switch (s->kind) {
+  case S_LET:
+    printf(": " KNRM "%s%s ", s->as.let_binding.is_mut ? "mut " : "",
+           s->as.let_binding.name);
+    ast_print_type(s->as.let_binding.type_annotation);
+    printf("\n");
+    ast_print_expr(s->as.let_binding.init, indent + 1, last_mask, true);
+    break;
+
+  case S_EXPR:
+    printf("\n");
+    ast_print_expr(s->as.expression, indent + 1, last_mask, true);
+    break;
+
+  case S_BLOCK:
+    printf("\n");
+    Block b = s->as.block;
+    for (size_t i = 0; i < b.stmt_count; i++) {
+      bool last = (i == b.stmt_count - 1) && (b.expr_final == NULL);
+      ast_print_stmt(b.statements[i], indent + 1, last_mask, last);
+    }
+    if (b.expr_final)
+      ast_print_expr(b.expr_final, indent + 1, last_mask, true);
+    break;
+
+  case S_WHILE:
+    printf("\n");
+    ast_print_expr(s->as._while.condition, indent + 1, last_mask, false);
+    ast_print_stmt(s->as._while.body, indent + 1, last_mask, true);
+    break;
+  case S_RETURN:
+    printf("\n");
+    if (s->as.return_value) {
+      ast_print_expr(s->as.return_value, indent + 1, last_mask, true);
+    } else {
+      print_prefix(indent + 1, last_mask);
+      printf(KGRY "└── " KNRM KBLU "void" KNRM "\n");
+    }
+    break;
+
+  case S_BREAK:
+    printf("\n");
+    break;
+
+  case S_CONTINUE:
+    printf("\n");
+    break;
+
+  case S_FOR:
+    printf(": " KNRM "%s\n", s->as._for.iterator);
+    ast_print_expr(s->as._for.iterable, indent + 1, last_mask, false);
+    ast_print_stmt(s->as._for.body, indent + 1, last_mask, true);
+    break;
+
+  case S_LOOP:
+    printf("\n");
+    ast_print_stmt(s->as._loop.body, indent + 1, last_mask, true);
+    break;
+  default:
+    printf("\n");
+    break;
+  }
+}
+
+void ast_print_decl(Decl *d, int indent, bool *last_mask, bool is_last) {
+  if (!d)
+    return;
+  last_mask[indent - 1] = is_last;
+  print_branch(indent, last_mask, is_last);
+
+  printf("[" KGRN "%s" KNRM "]", decl_kind_to_str(d->kind));
+
+  switch (d->kind) {
+  case D_FUNC:
+    printf(": " KNRM "%s\n", d->as.function.name);
+    ast_print_stmt(d->as.function.body, indent + 1, last_mask, true);
+    break;
+
+  case D_STRUCT:
+    printf(": " KNRM "%s (%zu field(s))\n", d->as._struct.name,
+           d->as._struct.field_count);
+    for (size_t i = 0; i < d->as._struct.field_count; i++) {
+      bool last_field = (i == d->as._struct.field_count - 1);
+      print_prefix(indent + 1, last_mask);
+      printf(KGRY "%s" KNRM "%s: ", last_field ? "└── " : "├── ",
+             d->as._struct.fields[i].name);
+      ast_print_type(d->as._struct.fields[i].type);
+      printf("\n");
+    }
+    break;
+
+  case D_ENUM:
+    printf(": " KNRM "%s (%zu variant(s))\n", d->as._enum.name,
+           d->as._enum.variant_count);
+    for (size_t i = 0; i < d->as._enum.variant_count; i++) {
+      bool last_variant = (i == d->as._enum.variant_count - 1);
+      print_prefix(indent + 1, last_mask);
+      printf(KGRY "%s" KNRM "%s", last_variant ? "└── " : "├── ",
+             d->as._enum.variants[i].name);
+      if (d->as._enum.variants[i].payload) {
+        printf(KGRY "(" KNRM);
+        ast_print_type(d->as._enum.variants[i].payload);
+        printf(KGRY ")" KNRM);
+      }
+      printf("\n");
+    }
+    break;
+
+  case D_IMPL:
+    printf(": " KNRM);
+    ast_print_type(d->as.impl.target_type);
+    printf("\n");
+    for (size_t i = 0; i < d->as.impl.method_count; i++) {
+      bool last_method = (i == d->as.impl.method_count - 1);
+      ast_print_decl(d->as.impl.methods[i], indent + 1, last_mask, last_method);
+    }
+    break;
+
+  case D_EXTERN:
+    printf("\n");
+    for (size_t i = 0; i < d->as.extern_block.count; i++) {
+      bool last_extern = (i == d->as.extern_block.count - 1);
+      ast_print_decl(d->as.extern_block.decls[i], indent + 1, last_mask,
+                     last_extern);
+    }
+    break;
+
+  case D_TYPE:
+    printf(": " KNRM "%s = ", d->as.type_alias.alias_name);
+    ast_print_type(d->as.type_alias.target);
+    printf("\n");
+    break;
+  default:
+    printf("\n");
+    break;
+  }
+}
+
+void ast_print_module(Module *m) {
+  if (!m)
+    return;
+  bool last_mask[256] = {0};
+  printf(KGRY "Module" KNRM "\n");
+  for (size_t i = 0; i < m->count; i++) {
+    ast_print_decl(m->declarations[i], 1, last_mask, i == m->count - 1);
+  }
+}
+
+void run_ast_print_tests(void) {
+  printf("Starting Koz AST Visualizer Test...\n");
+  printf("==================================\n\n");
+
+  Token t_plus;
+  snprintf(t_plus.token, 255, "+");
+
+  Expr e5 = {.kind = E_INT_LIT, .as.int_val = 5};
+  Expr ey = {.kind = E_IDENT, .as.ident_name = "y"};
+  Expr e_sum = {.kind = E_BINARY,
+                .token = t_plus,
+                .as.binary.left = &e5,
+                .as.binary.right = &ey};
+
+  Stmt s_let = {
+      .kind = S_LET,
+      .as.let_binding = {.name = "x", .is_mut = true, .init = &e_sum}};
+
+  Stmt *stmts[] = {&s_let};
+  Block b = {.statements = stmts, .stmt_count = 1};
+  Stmt s_body = {.kind = S_BLOCK, .as.block = b};
+
+  Decl d_func = {.kind = D_FUNC,
+                 .as.function = {.name = "main", .body = &s_body}};
+
+  Decl *decls[] = {&d_func};
   Module mod = {.declarations = decls, .count = 1};
 
   ast_print_module(&mod);
-}
-
-void run_parser_tests(void) {
-  printf("\n========================================\n");
-  printf("Koz Parser Tests \n");
-  printf("========================================\n");
-
-  test_parse_expr("Integer Literal", "42");
-  test_parse_expr("Binary Addition", "1 + 2");
-  test_parse_expr("Precedence", "1 + 2 * 3");
-  test_parse_expr("Parentheses", "(1 + 2) * 3");
-  test_parse_expr("Function Call", "foo(1, 2)");
-  test_parse_expr("Index Access", "items[0]");
-  test_parse_expr("Field Access", "player.x");
-  test_parse_expr("Block Expression", "{ 5 + 3 }");
-  test_parse_expr("Nested Block", "{ let x = 5; x + 2 }");
-
-  printf("\n========================================\n");
-  printf("Parser Tests Complete\n");
-  printf("========================================\n");
 }

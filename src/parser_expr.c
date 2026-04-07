@@ -34,9 +34,7 @@ Expr *parse_infix(Parser *p, Arena *a, Expr *left, Token op) {
   case TOKEN_BXOR:
   case TOKEN_LSHIFT:
   case TOKEN_RSHIFT: {
-    // Binary operator
     Precedence prec = get_precedence(op.ttype);
-    // For right-associative operators (like **), use prec - 1
     Precedence right_prec = (op.ttype == TOKEN_STARSTAR) ? prec - 1 : prec;
     Expr *right = parse_expr(p, a, right_prec);
     return ast_expr_binary(a, op, left, right);
@@ -46,60 +44,51 @@ Expr *parse_infix(Parser *p, Arena *a, Expr *left, Token op) {
     Token ident = CURRENT(p);
     ADVANCE(p);
     return ast_expr_access(a, op, left, ident);
-  } break;
+  }
 
   case TOKEN_LPAREN: {
     Expr *local_args[256];
     size_t arg_count = 0;
 
     if (CURRENT(p).ttype != TOKEN_RPAREN) {
-      // first argument
       local_args[arg_count++] = parse_expr(p, a, PREC_NONE);
-
-      // additional arguments after commas
       while (CURRENT(p).ttype == TOKEN_COMMA) {
-        ADVANCE(p); // consume comma
+        ADVANCE(p);
         local_args[arg_count++] = parse_expr(p, a, PREC_NONE);
       }
     }
 
     EXPECT(p, TOKEN_RPAREN, "expected ')' after arguments");
 
-    // copy to arena
     Expr **args = arena_allocate(a, arg_count * sizeof(Expr *));
     for (size_t i = 0; i < arg_count; i++) {
       args[i] = local_args[i];
     }
-
     return ast_expr_call(a, op, left, args, arg_count);
-  } break;
+  }
 
   case TOKEN_LBRACK: {
     Expr *index_expr = parse_expr(p, a, PREC_NONE);
     EXPECT(p, TOKEN_RBRACK, "expected ']' after index expression");
     return ast_expr_index(a, op, left, index_expr);
-  } break;
+  }
 
   case TOKEN_QUESTION:
-    // error propagation
-    return ast_expr_unary(a, op, left); // postfix '?' wraps the left
+    return ast_expr_unary(a, op, left);
 
   default:
-    fprintf(stderr, "error: unknown infix operator\n");
+    fprintf(stderr, "error at %zu:%zu: unknown infix operator '%s'\n", op.line,
+            op.column, op.token);
     exit(1);
   }
 }
 
 Expr *parse_expr(Parser *p, Arena *a, Precedence min_prec) {
-  // primary expression
   Expr *left = parse_primary(p, a);
-
-  // while the next operator has precedence >= min_prec
-  while (get_precedence(PEEK(p).ttype) >= min_prec) {
-    Token op = ADVANCE(p); // consume the operator
+  while (get_precedence(PEEK(p).ttype) > min_prec) {
+    Token op = ADVANCE(p);
     left = parse_infix(p, a, left, op);
   }
-
   return left;
 }
 
@@ -110,27 +99,23 @@ Expr *parse_literal(Parser *p, Arena *a) {
   switch (t.ttype) {
   case TOKEN_INT_LIT:
     return ast_expr_int(a, t, atoll(t.token));
-
   case TOKEN_FLOAT_LIT:
     return ast_expr_float(a, t, atof(t.token));
-
   case TOKEN_STRING_LIT:
     return ast_expr_string(a, t, t.token);
-
   case TOKEN_CHAR_LIT:
     return ast_expr_char(a, t, t.token[0]);
-
   case TOKEN_TRUE:
     return ast_expr_bool(a, t, true);
-
   case TOKEN_FALSE:
     return ast_expr_bool(a, t, false);
-
   case TOKEN_NONE:
     return ast_expr_none(a, t);
   default:
-    // should be unreachable
-    fprintf(stderr, "error: parse_literal called on a non-literal token\n");
+    fprintf(
+        stderr,
+        "error at %zu:%zu: parse_literal called on non-literal token '%s'\n",
+        t.line, t.column, t.token);
     exit(1);
   }
 }
@@ -142,13 +127,12 @@ Expr *parse_name(Parser *p, Arena *a) {
   switch (tok.ttype) {
   case TOKEN_IDENT:
     return ast_expr_ident(a, tok, tok.token);
-
   case TOKEN_UNDERSCORE:
-    return ast_expr_ident(
-        a, tok, "_"); // or ast_expr_underscore if you want a separate node
-
+    return ast_expr_ident(a, tok, "_");
   default:
-    fprintf(stderr, "error: parse_name called on non-name token\n");
+    fprintf(stderr,
+            "error at %zu:%zu: parse_name called on non-name token '%s'\n",
+            tok.line, tok.column, tok.token);
     exit(1);
   }
 }
@@ -161,45 +145,35 @@ Expr *parse_grouped_expr(Parser *p, Arena *a) {
 }
 
 Expr *parse_block_expr(Parser *p, Arena *a) {
-  Token start = CURRENT(p); // the '{' token
+  Token start = CURRENT(p);
   ADVANCE(p);
 
-  // stack array for statements (max 1024 per block)
   Stmt *local_stmts[1024];
   size_t stmt_count = 0;
   Expr *tail = NULL;
 
-  // Parse statements until we hit '}' or EOF
   while (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
     if (stmt_count >= 1024) {
-      fprintf(stderr, "error: block exceeds 1024 statements\n");
+      fprintf(stderr, "error at %zu:%zu: block exceeds 1024 statements\n",
+              start.line, start.column);
       exit(1);
     }
-
     // TODO: Stmt *stmt = parse_stmt(p, a);
     // local_stmts[stmt_count++] = stmt;
   }
 
-  // Check for trailing expression (only if not already at '}')
   if (CURRENT(p).ttype != TOKEN_RBRACE) {
     tail = parse_expr(p, a, PREC_NONE);
   }
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after block expression");
 
-  // Allocate exact array in arena and copy pointers
   Stmt **stmts = arena_allocate(a, stmt_count * sizeof(Stmt *));
   for (size_t i = 0; i < stmt_count; i++) {
     stmts[i] = local_stmts[i];
   }
 
   return ast_expr_block(a, start, stmts, stmt_count, tail);
-}
-
-Stmt *parse_break_stmt(Parser *p, Arena *a) {
-  Token token = CURRENT(p);
-  ADVANCE(p);
-  return ast_stmt_break(a, token);
 }
 
 Stmt *parse_continue_stmt(Parser *p, Arena *a) {
@@ -213,10 +187,9 @@ Stmt *parse_return_stmt(Parser *p, Arena *a) {
   ADVANCE(p);
 
   Expr *value = NULL;
-
-  if (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF)
+  if (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
     value = parse_expr(p, a, PREC_NONE);
-
+  }
   return ast_stmt_return(a, token, value);
 }
 
@@ -239,53 +212,48 @@ Expr *parse_primary(Parser *p, Arena *a) {
   case TOKEN_NONE:
     return parse_literal(p, a);
 
-  // names
   case TOKEN_IDENT:
   case TOKEN_UNDERSCORE:
     return parse_name(p, a);
 
-  // grouping
   case TOKEN_LPAREN:
     return parse_grouped_expr(p, a);
 
-  // block expression
   case TOKEN_LBRACE:
-    // return parse_block_expr(p, a);
-
-  // array literal
-  case TOKEN_LBRACK:
-    // TODO: implement parse_array_expr
-    fprintf(stderr, "error: array literals not implemented yet\n");
+    fprintf(stderr, "error at %zu:%zu: block expressions not yet implemented\n",
+            token.line, token.column);
     exit(1);
 
-  // control flow expressions
+  case TOKEN_LBRACK:
+    fprintf(stderr, "error at %zu:%zu: array literals not yet implemented\n",
+            token.line, token.column);
+    exit(1);
+
   case TOKEN_IF:
-    // TODO: implement parse_if_expr
-    fprintf(stderr, "error: if expressions not implemented yet\n");
+    fprintf(stderr, "error at %zu:%zu: if expressions not yet implemented\n",
+            token.line, token.column);
     exit(1);
 
   case TOKEN_MATCH:
-    // TODO: implement parse_match_expr
-    fprintf(stderr, "error: match expressions not implemented yet\n");
+    fprintf(stderr, "error at %zu:%zu: match expressions not yet implemented\n",
+            token.line, token.column);
     exit(1);
 
-  // constructor
   case TOKEN_SOME:
-    // TODO: implement parse_constructor_call
-    fprintf(stderr, "error: constructor calls not implemented yet\n");
+    fprintf(stderr, "error at %zu:%zu: constructor calls not yet implemented\n",
+            token.line, token.column);
     exit(1);
 
-  // unary operators
   case TOKEN_MINUS:
   case TOKEN_NOT:
   case TOKEN_BNOT:
-    // TODO: implement parse_unary_expr
-    fprintf(stderr, "error: unary expressions not implemented yet\n");
+    fprintf(stderr, "error at %zu:%zu: unary expressions not yet implemented\n",
+            token.line, token.column);
     exit(1);
 
   default:
-    fprintf(stderr, "error: unexpected token '%s' at %zu:%zu\n", token.token,
-            token.line, token.column);
+    fprintf(stderr, "error at %zu:%zu: unexpected token '%s' in expression\n",
+            token.line, token.column, token.token);
     exit(1);
   }
 }
