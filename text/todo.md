@@ -1,8 +1,53 @@
-# todo
+# roadmap
 
 - [x] open file, read into string
 - [x] data structure design for tokens, tokenize
 - [x] lexer and token stream
+
 - [x] design AST
-- [ ] parse tokens and form AST :: in progress
-- [ ] ...
+- [x] arena allocator for tokens and AST
+- [x] AST visualizer with terminal styling
+
+- [x] Pratt parser core (parse_expr, parse_infix, parse_primary)
+- [x] binary operators (arithmetic, comparison, logical, bitwise)
+- [x] postfix operators (., [, (, ?)
+- [x] function calls
+- [x] index access
+- [x] field access
+- [x] block expressions
+- [x] let statements
+- [x] while loops
+- [x] for loops
+- [x] loop statements
+- [x] return, break, continue statements
+- [x] block statements
+- [x] expression statements
+- [x] type parsing (primitives, names, arrays)
+- [ ] unary operators (-, !, ~)
+- [ ] array literals [1, 2, 3]
+- [ ] if expressions
+- [ ] match expressions
+- [ ] constructor calls (some, none)
+- [ ] range operator (.., ..=)
+- [ ] assignment statements (=, +=, -=, \*=, /=, %=)
+- [ ] struct declarations
+- [ ] enum declarations
+- [ ] function declarations
+- [ ] impl blocks
+- [ ] extern blocks
+- [ ] type aliases
+- [ ] generic types (Result(T, E), Option(T))
+- [ ] function types
+- [ ] import statements
+- [ ] module system
+- [ ] parse_module (top-level declaration loop)
+- [ ] error recovery and multiple error reporting
+- [ ] semantic analysis (type checking, name resolution)
+- [ ] pattern exhaustiveness checking
+- [ ] linear type detection for in-place mutation
+- [ ] C code generation
+- [ ] build tool
+- [ ] tree-sitter grammar
+- [ ] LSP implementation
+- [ ] standard library
+- [ ] game engine integration

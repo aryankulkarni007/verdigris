@@ -190,6 +190,34 @@ Stmt *ast_stmt_expr(Arena *arena, Token token, Expr *expression) {
   return node;
 }
 
+Stmt *ast_stmt_while(Arena *arena, Token token, Expr *condition, Stmt *block) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_WHILE;
+  node->token = token;
+  node->as._while.condition = condition;
+  node->as._while.body = block;
+  return node;
+}
+
+Stmt *ast_stmt_loop(Arena *arena, Token token, Stmt *body) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_LOOP;
+  node->token = token;
+  node->as._loop.body = body;
+  return node;
+}
+
+Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
+                   Stmt *body) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_FOR;
+  node->token = token;
+  node->as._for.iterator = iterator;
+  node->as._for.iterable = iterable;
+  node->as._for.body = body;
+  return node;
+}
+
 Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
                       size_t field_count) {
   Decl *node = arena_allocate(arena, sizeof(Decl));

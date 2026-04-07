@@ -38,7 +38,6 @@ procedures.
 │   ├──  main.h
 │   ├──  parser.h
 │   └──  token.h
-├── 󰡯 koz
 ├──  koz.dSYM
 │   └──  Contents
 │       ├──  Info.plist
@@ -54,7 +53,8 @@ procedures.
 │   ├──  ast_print.c
 │   ├──  lexer.c
 │   ├──  main.c
-│   ├──  parser.c
+│   ├──  parser_expr.c
+│   ├──  parser_stmt.c
 │   ├──  test_suite.c
 │   └──  token.c
 ├──  tests
