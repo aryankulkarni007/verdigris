@@ -356,8 +356,14 @@ Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
                    Stmt *body);
 
 // Declaration Builders
-Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
-                      size_t field_count);
+Decl *ast_decl_extern(Arena *arena, Token token, Decl **decls,
+                      size_t decl_count);
+Decl *ast_decl_impl(Arena *arena, Token token, Type *target_type,
+                    Decl **methods, size_t method_count);
 Decl *ast_decl_func(Arena *arena, Token token, char *name, Param *params,
                     size_t param_count, Type *return_type, Stmt *body);
+Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
+                      size_t field_count);
+Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
+                    size_t variant_count);
 #endif // AST_H

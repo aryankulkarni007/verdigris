@@ -218,6 +218,17 @@ Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
   return node;
 }
 
+Decl *ast_decl_impl(Arena *arena, Token token, Type *target_type,
+                    Decl **methods, size_t method_count) {
+  Decl *node = arena_allocate(arena, sizeof(Decl));
+  node->kind = D_IMPL;
+  node->token = token;
+  node->as.impl.target_type = target_type;
+  node->as.impl.methods = methods;
+  node->as.impl.method_count = method_count;
+  return node;
+}
+
 Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
                       size_t field_count) {
   Decl *node = arena_allocate(arena, sizeof(Decl));
@@ -239,5 +250,25 @@ Decl *ast_decl_func(Arena *arena, Token token, char *name, Param *params,
   node->as.function.param_count = param_count;
   node->as.function.return_type = return_type;
   node->as.function.body = body;
+  return node;
+}
+
+Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
+                    size_t variant_count) {
+  Decl *node = arena_allocate(arena, sizeof(Decl));
+  node->kind = D_ENUM;
+  node->token = token;
+  node->as._enum.variants = variants;
+  node->as._enum.variant_count = variant_count;
+  return node;
+}
+
+Decl *ast_decl_extern(Arena *arena, Token token, Decl **decls,
+                      size_t decl_count) {
+  Decl *node = arena_allocate(arena, sizeof(Decl));
+  node->kind = D_EXTERN;
+  node->token = token;
+  node->as.extern_block.decls = decls;
+  node->as.extern_block.count = decl_count;
   return node;
 }

@@ -30,11 +30,11 @@
 - [ ] constructor calls (some, none)
 - [ ] range operator (.., ..=)
 - [ ] assignment statements (=, +=, -=, \*=, /=, %=)
-- [ ] struct declarations
-- [ ] enum declarations
-- [ ] function declarations
-- [ ] impl blocks
-- [ ] extern blocks
+- [x] struct declarations
+- [x] enum declarations
+- [x] function declarations
+- [x] impl blocks
+- [x] extern blocks
 - [ ] type aliases
 - [ ] generic types (Result(T, E), Option(T))
 - [ ] function types
