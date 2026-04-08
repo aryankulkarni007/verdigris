@@ -40,8 +40,6 @@
   X(TOKEN_EXTERN)                                                              \
   X(TOKEN_TRUE)                                                                \
   X(TOKEN_FALSE)                                                               \
-  X(TOKEN_SOME)                                                                \
-  X(TOKEN_NONE)                                                                \
   X(TOKEN_PLUS)                                                                \
   X(TOKEN_MINUS)                                                               \
   X(TOKEN_STAR)                                                                \

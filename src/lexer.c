@@ -38,8 +38,6 @@ static Keyword keywords[] = {
     {"bool", TOKEN_TBOOL},
     {"char", TOKEN_TCHAR},
     {"string", TOKEN_TSTRING},
-    {"some", TOKEN_SOME},
-    {"none", TOKEN_NONE},
 };
 
 static size_t keyword_count = sizeof(keywords) / sizeof(keywords[0]);
@@ -95,9 +93,8 @@ void lex(Arena *stream, Lexer *l) {
       if (l->last == TOKEN_IDENT || l->last == TOKEN_INT_LIT ||
           l->last == TOKEN_FLOAT_LIT || l->last == TOKEN_STRING_LIT ||
           l->last == TOKEN_CHAR_LIT || l->last == TOKEN_TRUE ||
-          l->last == TOKEN_FALSE || l->last == TOKEN_NONE ||
-          l->last == TOKEN_RPAREN || l->last == TOKEN_RBRACE ||
-          l->last == TOKEN_RBRACK) {
+          l->last == TOKEN_FALSE || l->last == TOKEN_RPAREN ||
+          l->last == TOKEN_RBRACE || l->last == TOKEN_RBRACK) {
         l_token_append(";", TOKEN_SEMI, stream, l);
       }
       advance(l);

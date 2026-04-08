@@ -184,6 +184,8 @@ Decl *parse_enum_decl(Parser *p, Arena *a) {
 
     if (CURRENT(p).ttype == TOKEN_COMMA) {
       ADVANCE(p);
+    } else if (CURRENT(p).ttype == TOKEN_SEMI) {
+      ADVANCE(p);
     } else if (CURRENT(p).ttype != TOKEN_RBRACE) {
       fprintf(stderr, "error at %zu:%zu: expected ',' or '}' after variant\n",
               CURRENT(p).line, CURRENT(p).column);
@@ -246,6 +248,8 @@ Decl *parse_struct_decl(Parser *p, Arena *a) {
     ++field_count;
 
     if (CURRENT(p).ttype == TOKEN_COMMA) {
+      ADVANCE(p);
+    } else if (CURRENT(p).ttype == TOKEN_SEMI) {
       ADVANCE(p);
     } else if (CURRENT(p).ttype != TOKEN_RBRACE) {
       fprintf(stderr, "error at %zu:%zu: expected ',' or '}' after field\n",

@@ -1,4 +1,5 @@
 #include "../include/parser.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -121,8 +122,6 @@ Expr *parse_literal(Parser *p, Arena *a) {
     return ast_expr_bool(a, t, true);
   case TOKEN_FALSE:
     return ast_expr_bool(a, t, false);
-  case TOKEN_NONE:
-    return ast_expr_none(a, t);
   default:
     fprintf(
         stderr,
@@ -138,7 +137,8 @@ Expr *parse_name(Parser *p, Arena *a) {
 
   switch (tok.ttype) {
   case TOKEN_IDENT:
-    if (CURRENT(p).ttype == TOKEN_LBRACE) {
+    if (CURRENT(p).ttype == TOKEN_LBRACE &&
+        isupper((unsigned char)tok.token[0])) {
       return parse_struct_expr(p, a, tok);
     }
     return ast_expr_ident(a, tok, tok.token);
@@ -177,6 +177,8 @@ Expr *parse_struct_expr(Parser *p, Arena *a, Token name_tok) {
     field_count++;
 
     if (CURRENT(p).ttype == TOKEN_COMMA)
+      ADVANCE(p);
+    else if (CURRENT(p).ttype == TOKEN_SEMI)
       ADVANCE(p);
     else if (CURRENT(p).ttype != TOKEN_RBRACE) {
       fprintf(stderr, "error at %zu:%zu: expected ',' or '}' after field\n",
@@ -301,7 +303,6 @@ Expr *parse_primary(Parser *p, Arena *a) {
   case TOKEN_CHAR_LIT:
   case TOKEN_TRUE:
   case TOKEN_FALSE:
-  case TOKEN_NONE:
     return parse_literal(p, a);
 
   case TOKEN_IDENT:
@@ -322,9 +323,6 @@ Expr *parse_primary(Parser *p, Arena *a) {
 
   case TOKEN_MATCH:
     return parse_match_expr(p, a);
-
-  case TOKEN_SOME:
-    // TODO: CONSTRUCTOR CALLS
 
   case TOKEN_MINUS:
   case TOKEN_NOT:
@@ -350,10 +348,10 @@ Pattern *parse_pattern(Parser *p, Arena *a) {
   }
 
   // none — bare variant with no payload
-  if (token.ttype == TOKEN_NONE) {
-    ADVANCE(p);
-    return ast_pat_enum(a, token, arena_strdup(a, "none"), NULL);
-  }
+  // if (token.ttype == TOKEN_NONE) {
+  //   ADVANCE(p);
+  //   return ast_pat_enum(a, token, arena_strdup(a, "none"), NULL);
+  // }
 
   // literals
   if (token.ttype == TOKEN_INT_LIT || token.ttype == TOKEN_FLOAT_LIT ||
@@ -425,14 +423,7 @@ Expr *parse_match_expr(Parser *p, Arena *a) {
   Token match = CURRENT(p);
   ADVANCE(p);
 
-  Token target_tok = CURRENT(p);
-  if (target_tok.ttype != TOKEN_IDENT) {
-    fprintf(stderr, "error at %zu:%zu: expected match target\n",
-            target_tok.line, target_tok.column);
-    exit(1);
-  }
-  Expr *target = ast_expr_ident(a, target_tok, target_tok.token);
-  ADVANCE(p);
+  Expr *target = parse_expr(p, a, PREC_NONE);
 
   EXPECT(p, TOKEN_LBRACE, "expected '{' after match target");
 
@@ -447,7 +438,7 @@ Expr *parse_match_expr(Parser *p, Arena *a) {
     }
 
     EXPECT(p, TOKEN_FAT_ARROW, "EXPECTED '=>' after pattern");
-    Expr *body = parse_expr(p, a, PREC_NONE);
+    Stmt *body = parse_stmt(p, a);
     if (CURRENT(p).ttype == TOKEN_SEMI)
       ADVANCE(p);
 

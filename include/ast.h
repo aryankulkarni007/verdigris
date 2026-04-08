@@ -135,7 +135,7 @@ typedef struct {
 typedef struct {
   struct Pattern *pattern; // e.g., PlayerMoved(p)
   struct Expr *guard;      // Optional 'if' condition (null if unused)
-  struct Expr *body;       // The expression to execute
+  struct Stmt *body;       // The expression to execute
 } MatchArm;
 
 typedef struct {

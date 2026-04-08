@@ -275,7 +275,7 @@ Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
   node->kind = S_FOR;
   node->token = token;
-  node->as._for.iterator = iterator;
+  node->as._for.iterator = arena_strdup(arena, iterator);
   node->as._for.iterable = iterable;
   node->as._for.body = body;
   return node;
@@ -294,7 +294,7 @@ Stmt *ast_stmt_op_assign(Arena *arena, Token op_token, Expr *target,
                          Expr *value) {
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
   node->kind = S_OP_ASSIGN;
-  node->token = op_token;
+  node->as.op_assign.op = op_token;
   node->as.op_assign.target = target; // could have been a massive bug
   node->as.op_assign.value = value;   //
   return node;
@@ -316,7 +316,7 @@ Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
   Decl *node = arena_allocate(arena, sizeof(Decl));
   node->kind = D_STRUCT;
   node->token = token;
-  node->as._struct.name = name;
+  node->as._struct.name = arena_strdup(arena, name);
   node->as._struct.fields = fields;
   node->as._struct.field_count = field_count;
   return node;

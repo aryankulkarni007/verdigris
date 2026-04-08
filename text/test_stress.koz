@@ -1,0 +1,210 @@
+-- RTS Unit Combat System
+-- Tests all parser features in a realistic game context
+
+-- type aliases
+type UnitId = int
+type TeamId = int
+type Health = float
+type Damage = float
+
+-- structs
+struct Vec2 {
+    x: float,
+    y: float
+}
+
+struct Unit {
+    id: UnitId,
+    team: TeamId,
+    health: Health,
+    max_health: Health,
+    damage: Damage,
+    position: Vec2,
+    alive: bool
+}
+
+struct GameState {
+    tick: int,
+    unit_count: int,
+    units: [Unit]
+}
+
+-- enums
+enum CombatResult {
+    Hit(float),
+    Miss,
+    Killed,
+    OutOfRange
+}
+
+enum Command {
+    Move(Vec2),
+    Attack(UnitId),
+    Halt,
+    Retreat
+}
+
+-- type aliases for callbacks
+type UnitId = int
+
+-- impl blocks
+@ Vec2 {
+    distance(self, other) :: (Vec2, Vec2) -> float {
+        let dx = self.x - other.x
+        let dy = self.y - other.y
+        dx * dx + dy * dy
+    }
+
+    zero() :: () -> Vec2 {
+        Vec2 { x = 0.0, y = 0.0 }
+    }
+}
+
+@ Unit {
+    is_alive(self) :: (Unit) -> bool {
+        self.health > 0.0
+    }
+
+    take_damage(self, amount) :: (Unit, float) -> CombatResult {
+        let new_health = self.health - amount
+        if new_health <= 0.0 {
+            self.health = 0.0
+            self.alive = false
+            Killed
+        } else {
+            self.health = new_health
+            Hit(amount)
+        }
+    }
+
+    heal(self, amount) :: (Unit, float) -> float {
+        let healed = self.health + amount
+        if healed > self.max_health {
+            self.health = self.max_health
+        } else {
+            self.health = healed
+        }
+        self.health
+    }
+}
+
+-- free functions
+in_range(a, b, range) :: (Vec2, Vec2, float) -> bool {
+    let dist = a.distance(b)
+    dist <= range * range
+}
+
+resolve_combat(attacker, target) :: (Unit, Unit) -> CombatResult {
+    let range = 50.0
+    let in_range = in_range(attacker.position, target.position, range)
+    if in_range {
+        target.take_damage(attacker.damage)
+    } else {
+        OutOfRange
+    }
+}
+
+process_command(unit, cmd) :: (Unit, Command) -> Unit {
+    match cmd {
+        Move(dest) => unit.position = dest
+        Attack(id) => unit
+        Halt => unit
+        Retreat => unit.position = Vec2 { x = 0.0, y = 0.0 }
+    }
+    unit
+}
+
+evaluate_health(unit) :: (Unit) -> string {
+    match unit.health {
+        0.0 => "dead"
+        1.0..25.0 => "critical"
+        25.0..75.0 => "wounded"
+        _ => "healthy"
+    }
+}
+
+tick(state) :: (GameState) -> GameState {
+    let i = 0
+    loop {
+        if i >= state.unit_count {
+            break
+        }
+        let unit = state.units[i]
+        if unit.alive {
+            let j = 0
+            loop {
+                if j >= state.unit_count {
+                    break
+                }
+                if i != j {
+                    let target = state.units[j]
+                    if target.alive {
+                        let result = resolve_combat(unit, target)
+                        match result {
+                            Killed => target.alive = false
+                            Hit(dmg) => target.health = target.health - dmg
+                            OutOfRange => target
+                            Miss => target
+                        }
+                    }
+                }
+                j += 1
+            }
+        }
+        i += 1
+    }
+    state.tick = state.tick + 1
+    state
+}
+
+main() :: () -> int {
+    let origin = Vec2 { x = 0.0, y = 0.0 }
+    let pos_a = Vec2 { x = 10.0, y = 20.0 }
+    let pos_b = Vec2 { x = 15.0, y = 25.0 }
+
+    let unit_a = Unit {
+        id = 1,
+        team = 1,
+        health = 100.0,
+        max_health = 100.0,
+        damage = 25.0,
+        position = pos_a,
+        alive = true
+    }
+
+    let unit_b = Unit {
+        id = 2,
+        team = 2,
+        health = 80.0,
+        max_health = 100.0,
+        damage = 15.0,
+        position = pos_b,
+        alive = true
+    }
+
+    let result = resolve_combat(unit_a, unit_b)
+    match result {
+        Killed => unit_b.alive = false
+        Hit(dmg) => unit_b.health = unit_b.health - dmg
+        OutOfRange => unit_b
+        Miss => unit_b
+    }
+
+    let status = evaluate_health(unit_b)
+
+    let xs = [1, 2, 3, 4, 5]
+    let sum = 0
+    for i in 0..5 {
+        sum += xs[i]
+    }
+
+    let n = 42
+    let description = match n {
+        0 => "zero"
+        1..10 => "small"
+        10..100 => "medium"
+        _ => "large"
+    }
+
+    sum
+}

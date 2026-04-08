@@ -296,7 +296,7 @@ void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last) {
       if (arm->guard)
         ast_print_expr(arm->guard, indent + 2, last_mask, arm->body == NULL);
       if (arm->body)
-        ast_print_expr(arm->body, indent + 2, last_mask, true);
+        ast_print_stmt(arm->body, indent + 2, last_mask, true);
     }
     break;
 

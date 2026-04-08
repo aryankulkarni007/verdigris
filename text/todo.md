@@ -1,5 +1,7 @@
 # roadmap
 
+X - done, A - archived/changed
+
 - [x] open file, read into string
 - [x] data structure design for tokens, tokenize
 - [x] lexer and token stream
@@ -26,8 +28,8 @@
 - [x] unary operators (-, !, ~)
 - [x] array literals [1, 2, 3]
 - [x] if expressions
-- [ ] match expressions
-- [ ] constructor calls (some, none)
+- [x] match expressions
+- [A] constructor calls (some, none)
 - [x] range operator (.., ..=)
 - [x] assignment statements (=, +=, -=, \*=, /=, %=)
 - [x] struct declarations
@@ -36,7 +38,7 @@
 - [x] impl blocks
 - [x] extern blocks
 - [x] type aliases
-- [ ] generic types (Result(T, E), Option(T))
+- [A] generic types (Result(T, E), Option(T))
 - [ ] function types
 - [ ] import statements
 - [ ] module system
