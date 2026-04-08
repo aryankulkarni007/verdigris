@@ -1,6 +1,18 @@
 #include "../include/ast.h"
 #include <stdio.h>
 
+const char *pattern_kind_to_str(PatternKind k) {
+  switch (k) {
+#define AS_STR(kind, name)                                                     \
+  case kind:                                                                   \
+    return name;
+    PATTERN_KINDS(AS_STR)
+#undef AS_STR
+  default:
+    return "Unknown";
+  }
+}
+
 const char *type_kind_to_str(TypeKind k) {
   switch (k) {
     // clang-format off
@@ -269,6 +281,25 @@ void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last) {
     }
     break;
 
+  case E_MATCH:
+    printf("\n");
+    ast_print_expr(e->as._match.target, indent + 1, last_mask,
+                   e->as._match.arm_count == 0);
+    for (size_t i = 0; i < e->as._match.arm_count; i++) {
+      bool last = i == e->as._match.arm_count - 1;
+      MatchArm *arm = &e->as._match.arms[i];
+      print_branch(indent + 1, last_mask, last);
+      printf("[" KMAG "Arm" KNRM "]\n");
+      last_mask[indent] = last;
+      ast_print_pattern(arm->pattern, indent + 2, last_mask,
+                        arm->guard == NULL && arm->body == NULL);
+      if (arm->guard)
+        ast_print_expr(arm->guard, indent + 2, last_mask, arm->body == NULL);
+      if (arm->body)
+        ast_print_expr(arm->body, indent + 2, last_mask, true);
+    }
+    break;
+
   case E_NONE:
     printf(": " KYEL "none" KNRM "\n");
     break;
@@ -453,6 +484,45 @@ void ast_print_decl(Decl *d, int indent, bool *last_mask, bool is_last) {
   }
 }
 
+void ast_print_pattern(Pattern *p, int indent, bool *last_mask, bool is_last) {
+  if (!p)
+    return;
+  last_mask[indent - 1] = is_last;
+  print_branch(indent, last_mask, is_last);
+  printf("[" KCYN "%s" KNRM "]", pattern_kind_to_str(p->kind));
+
+  switch (p->kind) {
+  case P_WILDCARD:
+    printf(": " KNRM "_\n");
+    break;
+  case P_IDENT:
+    printf(": " KNRM "%s\n", p->as.name);
+    break;
+  case P_LITERAL:
+    printf("\n");
+    ast_print_expr(p->as.literal, indent + 1, last_mask, true);
+    break;
+  case P_ENUM:
+    printf(": " KNRM "%s\n", p->as._enum.variant);
+    if (p->as._enum.inner)
+      ast_print_pattern(p->as._enum.inner, indent + 1, last_mask, true);
+    break;
+  case P_STRUCT:
+    printf(": " KNRM "%s\n", p->as._struct.name);
+    for (size_t i = 0; i < p->as._struct.field_count; i++) {
+      bool last = i == p->as._struct.field_count - 1;
+      print_branch(indent + 1, last_mask, last);
+      printf(KGRY "%s" KNRM "\n", p->as._struct.fields[i]);
+    }
+    break;
+  case P_RANGE:
+    printf(" (%s)\n", p->as.range.is_inclusive ? "..=" : "..");
+    ast_print_expr(p->as.range.start, indent + 1, last_mask, false);
+    ast_print_expr(p->as.range.end, indent + 1, last_mask, true);
+    break;
+  }
+}
+
 void ast_print_module(Module *m) {
   if (!m)
     return;
@@ -463,33 +533,33 @@ void ast_print_module(Module *m) {
   }
 }
 
-void run_ast_print_tests(void) {
-  printf("AST visualizer test...\n");
-  printf("==================================\n\n");
-
-  Token t_plus;
-  snprintf(t_plus.token, 255, "+");
-
-  Expr e5 = {.kind = E_INT_LIT, .as.int_val = 5};
-  Expr ey = {.kind = E_IDENT, .as.ident_name = "y"};
-  Expr e_sum = {.kind = E_BINARY,
-                .token = t_plus,
-                .as.binary.left = &e5,
-                .as.binary.right = &ey};
-
-  Stmt s_let = {
-      .kind = S_LET,
-      .as.let_binding = {.name = "x", .is_mut = true, .init = &e_sum}};
-
-  Stmt *stmts[] = {&s_let};
-  Block b = {.statements = stmts, .stmt_count = 1};
-  Stmt s_body = {.kind = S_BLOCK, .as.block = b};
-
-  Decl d_func = {.kind = D_FUNC,
-                 .as.function = {.name = "main", .body = &s_body}};
-
-  Decl *decls[] = {&d_func};
-  Module mod = {.declarations = decls, .count = 1};
-
-  ast_print_module(&mod);
-}
+// void run_ast_print_tests(void) {
+//   printf("AST visualizer test...\n");
+//   printf("==================================\n\n");
+//
+//   Token t_plus;
+//   snprintf(t_plus.token, 255, "+");
+//
+//   Expr e5 = {.kind = E_INT_LIT, .as.int_val = 5};
+//   Expr ey = {.kind = E_IDENT, .as.ident_name = "y"};
+//   Expr e_sum = {.kind = E_BINARY,
+//                 .token = t_plus,
+//                 .as.binary.left = &e5,
+//                 .as.binary.right = &ey};
+//
+//   Stmt s_let = {
+//       .kind = S_LET,
+//       .as.let_binding = {.name = "x", .is_mut = true, .init = &e_sum}};
+//
+//   Stmt *stmts[] = {&s_let};
+//   Block b = {.statements = stmts, .stmt_count = 1};
+//   Stmt s_body = {.kind = S_BLOCK, .as.block = b};
+//
+//   Decl d_func = {.kind = D_FUNC,
+//                  .as.function = {.name = "main", .body = &s_body}};
+//
+//   Decl *decls[] = {&d_func};
+//   Module mod = {.declarations = decls, .count = 1};
+//
+//   ast_print_module(&mod);
+// }

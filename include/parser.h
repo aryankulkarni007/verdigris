@@ -83,6 +83,7 @@ typedef struct {
 
 Type *parse_type(Parser *p, Arena *a);
 Decl *parse_type_alias(Parser *p, Arena *a);
+Pattern *parse_pattern(Parser *p, Arena *a);
 
 // main functions
 void parser_new(Parser *parser, Token *stream, size_t count);

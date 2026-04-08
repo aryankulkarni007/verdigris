@@ -212,6 +212,17 @@ Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end,
   return node;
 }
 
+Expr *ast_expr_match(Arena *arena, Token token, Expr *target, MatchArm *arms,
+                     size_t arm_count) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_MATCH;
+  node->token = token;
+  node->as._match.target = target;
+  node->as._match.arms = arms;
+  node->as._match.arm_count = arm_count;
+  return node;
+}
+
 Stmt *ast_stmt_break(Arena *arena, Token token) {
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
   node->kind = S_BREAK;
@@ -352,5 +363,68 @@ Decl *ast_decl_type_alias(Arena *arena, Token token, char *alias_name,
   node->token = token;
   node->as.type_alias.alias_name = arena_strdup(arena, alias_name);
   node->as.type_alias.target = target;
+  return node;
+}
+
+Pattern *ast_pat_wildcard(Arena *arena, Token token) {
+  Pattern *node = arena_allocate(arena, sizeof(Pattern));
+  node->kind = P_WILDCARD;
+  node->token = token;
+  return node;
+}
+
+Pattern *ast_pat_ident(Arena *arena, Token token, char *name) {
+  Pattern *node = arena_allocate(arena, sizeof(Pattern));
+  node->kind = P_IDENT;
+  node->token = token;
+  node->as.name = arena_strdup(arena, name);
+  return node;
+}
+
+Pattern *ast_pat_literal(Arena *arena, Token token, Expr *literal) {
+  Pattern *node = arena_allocate(arena, sizeof(Pattern));
+  node->kind = P_LITERAL;
+  node->token = token;
+  node->as.literal = literal;
+  return node;
+}
+Pattern *ast_pat_enum(Arena *arena, Token token, char *variant,
+                      Pattern *inner) {
+  Pattern *node = arena_allocate(arena, sizeof(Pattern));
+  node->kind = P_ENUM;
+  node->token = token;
+  node->as._enum.variant = arena_strdup(arena, variant);
+  node->as._enum.inner = inner;
+  return node;
+}
+
+Pattern *ast_pat_struct(Arena *arena, Token token, char *name, char **fields,
+                        size_t field_count) {
+  Pattern *node = arena_allocate(arena, sizeof(Pattern));
+  node->kind = P_STRUCT;
+  node->token = token;
+  node->as._struct.name = arena_strdup(arena, name);
+  node->as._struct.field_count = field_count;
+  node->as._struct.fields = NULL;
+
+  if (field_count > 0) {
+    node->as._struct.fields =
+        arena_allocate(arena, field_count * sizeof(char *));
+    for (size_t i = 0; i < field_count; i++) {
+      node->as._struct.fields[i] = arena_strdup(arena, fields[i]);
+    }
+  }
+
+  return node;
+}
+
+Pattern *ast_pat_range(Arena *arena, Token token, Expr *start, Expr *end,
+                       bool is_inclusive) {
+  Pattern *node = arena_allocate(arena, sizeof(Pattern));
+  node->kind = P_RANGE;
+  node->token = token;
+  node->as.range.start = start;
+  node->as.range.end = end;
+  node->as.range.is_inclusive = is_inclusive;
   return node;
 }

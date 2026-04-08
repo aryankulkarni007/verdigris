@@ -28,14 +28,14 @@
 - [x] if expressions
 - [ ] match expressions
 - [ ] constructor calls (some, none)
-- [ ] ____range operator (.., ..=)
+- [x] range operator (.., ..=)
 - [x] assignment statements (=, +=, -=, \*=, /=, %=)
 - [x] struct declarations
 - [x] enum declarations
 - [x] function declarations
 - [x] impl blocks
 - [x] extern blocks
-- [ ] type aliases
+- [x] type aliases
 - [ ] generic types (Result(T, E), Option(T))
 - [ ] function types
 - [ ] import statements

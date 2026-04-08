@@ -1,2 +1,11 @@
-type PlayerId = int
-type Matrix = [[float]]
+main() :: () -> int {
+    let x = 5
+    match x {
+        0 => 10
+        Some(n) => n
+        Player { x, y } => x
+        1..10 => 20
+        n if n > 0 => n
+        _ => 0
+    }
+}

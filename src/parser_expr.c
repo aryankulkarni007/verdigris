@@ -321,7 +321,7 @@ Expr *parse_primary(Parser *p, Arena *a) {
     return parse_if_expr(p, a);
 
   case TOKEN_MATCH:
-    // TODO: MATCH EXPRESSIONS
+    return parse_match_expr(p, a);
 
   case TOKEN_SOME:
     // TODO: CONSTRUCTOR CALLS
@@ -338,6 +338,130 @@ Expr *parse_primary(Parser *p, Arena *a) {
             token.line, token.column, token.token);
     exit(1);
   }
+}
+
+Pattern *parse_pattern(Parser *p, Arena *a) {
+  Token token = CURRENT(p);
+
+  // wildcard
+  if (token.ttype == TOKEN_UNDERSCORE) {
+    ADVANCE(p);
+    return ast_pat_wildcard(a, token);
+  }
+
+  // none — bare variant with no payload
+  if (token.ttype == TOKEN_NONE) {
+    ADVANCE(p);
+    return ast_pat_enum(a, token, arena_strdup(a, "none"), NULL);
+  }
+
+  // literals
+  if (token.ttype == TOKEN_INT_LIT || token.ttype == TOKEN_FLOAT_LIT ||
+      token.ttype == TOKEN_STRING_LIT || token.ttype == TOKEN_CHAR_LIT ||
+      token.ttype == TOKEN_TRUE || token.ttype == TOKEN_FALSE) {
+    Expr *lit = parse_literal(p, a);
+    // check for range
+    if (CURRENT(p).ttype == TOKEN_DOTDOT ||
+        CURRENT(p).ttype == TOKEN_DOTDOTEQ) {
+      bool inclusive = CURRENT(p).ttype == TOKEN_DOTDOTEQ;
+      ADVANCE(p);
+      Expr *end = parse_literal(p, a);
+      return ast_pat_range(a, token, lit, end, inclusive);
+    }
+    return ast_pat_literal(a, token, lit);
+  }
+
+  // ident — peek for delimiter
+  if (token.ttype == TOKEN_IDENT) {
+    ADVANCE(p);
+
+    // Some(pattern) — enum with payload
+    if (CURRENT(p).ttype == TOKEN_LPAREN) {
+      ADVANCE(p); // consume '('
+      Pattern *inner = parse_pattern(p, a);
+      EXPECT(p, TOKEN_RPAREN, "expected ')' after enum pattern");
+      return ast_pat_enum(a, token, arena_strdup(a, token.token), inner);
+    }
+
+    // Player { x, y } — struct pattern
+    if (CURRENT(p).ttype == TOKEN_LBRACE) {
+      ADVANCE(p); // consume '{'
+      char *local_fields[256];
+      size_t field_count = 0;
+
+      while (CURRENT(p).ttype != TOKEN_RBRACE && !IS_AT_END(p)) {
+        if (CURRENT(p).ttype != TOKEN_IDENT) {
+          fprintf(stderr,
+                  "error at %zu:%zu: expected field name in struct pattern\n",
+                  CURRENT(p).line, CURRENT(p).column);
+          exit(1);
+        }
+        local_fields[field_count++] = arena_strdup(a, CURRENT(p).token);
+        ADVANCE(p);
+        if (CURRENT(p).ttype == TOKEN_COMMA)
+          ADVANCE(p);
+        else if (CURRENT(p).ttype != TOKEN_RBRACE) {
+          fprintf(stderr,
+                  "error at %zu:%zu: expected ',' or '}' in struct pattern\n",
+                  CURRENT(p).line, CURRENT(p).column);
+          exit(1);
+        }
+      }
+      EXPECT(p, TOKEN_RBRACE, "expected '}' after struct pattern");
+      return ast_pat_struct(a, token, arena_strdup(a, token.token),
+                            local_fields, field_count);
+    }
+
+    // bare ident — variable binding or unit variant, type checker decides
+    return ast_pat_ident(a, token, arena_strdup(a, token.token));
+  }
+
+  fprintf(stderr, "error at %zu:%zu: expected pattern, got '%s'\n", token.line,
+          token.column, token.token);
+  exit(1);
+}
+
+Expr *parse_match_expr(Parser *p, Arena *a) {
+  Token match = CURRENT(p);
+  ADVANCE(p);
+
+  Token target_tok = CURRENT(p);
+  if (target_tok.ttype != TOKEN_IDENT) {
+    fprintf(stderr, "error at %zu:%zu: expected match target\n",
+            target_tok.line, target_tok.column);
+    exit(1);
+  }
+  Expr *target = ast_expr_ident(a, target_tok, target_tok.token);
+  ADVANCE(p);
+
+  EXPECT(p, TOKEN_LBRACE, "expected '{' after match target");
+
+  MatchArm local_arms[256];
+  size_t arm_count = 0;
+  while (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
+    Pattern *pattern = parse_pattern(p, a);
+    Expr *guard = NULL;
+    if (CURRENT(p).ttype == TOKEN_IF) {
+      ADVANCE(p);
+      guard = parse_expr(p, a, PREC_NONE);
+    }
+
+    EXPECT(p, TOKEN_FAT_ARROW, "EXPECTED '=>' after pattern");
+    Expr *body = parse_expr(p, a, PREC_NONE);
+    if (CURRENT(p).ttype == TOKEN_SEMI)
+      ADVANCE(p);
+
+    local_arms[arm_count].pattern = pattern;
+    local_arms[arm_count].guard = guard;
+    local_arms[arm_count].body = body;
+    arm_count++;
+  }
+  MatchArm *arms = arena_allocate(a, arm_count * sizeof(MatchArm));
+  for (size_t i = 0; i < arm_count; ++i)
+    arms[i] = local_arms[i];
+
+  EXPECT(p, TOKEN_RBRACE, "expected '}' after match arms"); // add this
+  return ast_expr_match(a, match, target, arms, arm_count);
 }
 
 Precedence get_precedence(TType type) {

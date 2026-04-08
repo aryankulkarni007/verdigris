@@ -14,6 +14,7 @@ typedef struct Type Type;
 typedef struct Expr Expr;
 typedef struct Stmt Stmt;
 typedef struct Decl Decl;
+typedef struct Pattern Pattern;
 
 // --- X-MACROS ---
 
@@ -70,6 +71,14 @@ typedef struct Decl Decl;
   X(D_EXTERN, "Extern")  /* extern { ... } */                                  \
   X(D_TYPE, "TypeAlias") /* type aliases */
 
+#define PATTERN_KINDS(X) /* thin pattern type*/                                \
+  X(P_WILDCARD, "PWildcard")                                                   \
+  X(P_LITERAL, "PLiteral")                                                     \
+  X(P_IDENT, "PIdentifer")                                                     \
+  X(P_ENUM, "PEnum")                                                           \
+  X(P_STRUCT, "PStruct")                                                       \
+  X(P_RANGE, "PRange")
+
 // --- ENUM GENERATION ---
 
 typedef enum {
@@ -96,6 +105,12 @@ typedef enum {
 #undef AS_ENUM
 } DeclKind;
 
+typedef enum {
+#define AS_ENUM(kind, name) kind,
+  PATTERN_KINDS(AS_ENUM)
+#undef AS_ENUM
+} PatternKind;
+
 // --- NODES ---
 
 // Represents a single field in a struct: x: float
@@ -118,9 +133,9 @@ typedef struct {
 
 // Represents one arm of a match statement: Pattern => Body
 typedef struct {
-  struct Expr *pattern; // e.g., PlayerMoved(p)
-  struct Expr *guard;   // Optional 'if' condition (null if unused)
-  struct Expr *body;    // The expression to execute
+  struct Pattern *pattern; // e.g., PlayerMoved(p)
+  struct Expr *guard;      // Optional 'if' condition (null if unused)
+  struct Expr *body;       // The expression to execute
 } MatchArm;
 
 typedef struct {
@@ -222,7 +237,7 @@ struct Expr {
     } method;
 
     IfExpr if_expr;
-    MatchExpr match_expr;
+    MatchExpr _match;
     Block block;
   } as;
 };
@@ -287,6 +302,32 @@ struct Decl {
   } as;
 };
 
+/// for match stmt
+struct Pattern {
+  PatternKind kind;
+  Token token;
+  union {
+    Expr *literal; // P_LITERAL
+    char *name;
+    struct {
+      char *variant;
+      struct Pattern *inner;
+    } _enum;
+
+    struct {
+      char *name;
+      char **fields;
+      size_t field_count;
+    } _struct;
+
+    struct {
+      Expr *start;
+      Expr *end;
+      bool is_inclusive;
+    } range;
+  } as;
+};
+
 // this module represents one .koz file's AST
 typedef struct {
   struct Decl **declarations;
@@ -313,6 +354,7 @@ void ast_print_module(Module *m);
 void ast_print_decl(Decl *d, int indent, bool *last_mask, bool is_last);
 void ast_print_stmt(Stmt *s, int indent, bool *last_mask, bool is_last);
 void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last);
+void ast_print_pattern(Pattern *p, int indent, bool *last_mask, bool is_last);
 void ast_print_type(Type *t); // Types are usually printed inline
 
 // Type Builders
@@ -351,9 +393,9 @@ Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end,
 Expr *ast_expr_if(Arena *arena, Token token, Expr *condition, Stmt *then_expr,
                   Stmt *else_expr);
 
-// TODO: match expression builder
-// Expr *ast_expr_match(Arena *arena, Token token, Expr *target, MatchArm *arms,
-// size_t arm_count);
+// TODO:
+Expr *ast_expr_match(Arena *arena, Token token, Expr *target, MatchArm *arms,
+                     size_t arm_count);
 
 // Statement Builders
 Stmt *ast_stmt_let(Arena *arena, Token token, char *name, bool is_mut,
@@ -390,5 +432,15 @@ Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
 
 Decl *ast_decl_type_alias(Arena *arena, Token token, char *alias_name,
                           Type *target);
+
+// Pattern Builders
+Pattern *ast_pat_wildcard(Arena *arena, Token token);
+Pattern *ast_pat_ident(Arena *arena, Token token, char *name);
+Pattern *ast_pat_literal(Arena *arena, Token token, Expr *literal);
+Pattern *ast_pat_enum(Arena *arena, Token token, char *variant, Pattern *inner);
+Pattern *ast_pat_struct(Arena *arena, Token token, char *name, char **fields,
+                        size_t field_count);
+Pattern *ast_pat_range(Arena *arena, Token token, Expr *start, Expr *end,
+                       bool is_inclusive);
 
 #endif // AST_H
