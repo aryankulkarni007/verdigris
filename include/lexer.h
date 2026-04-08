@@ -13,6 +13,7 @@ typedef struct {
   char *file;
   char *start;
   char *pos;
+  TType last; // for newline detection
 } Lexer;
 
 char peek(Lexer *l);

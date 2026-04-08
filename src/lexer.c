@@ -29,7 +29,6 @@ static Keyword keywords[] = {
     {"return", TOKEN_RETURN},
     {"import", TOKEN_IMPORT},
     {"module", TOKEN_MODULE},
-    {"private", TOKEN_PRIVATE},
     {"type", TOKEN_TYPE},
     {"extern", TOKEN_EXTERN},
     {"true", TOKEN_TRUE},
@@ -68,6 +67,7 @@ void lexer_new(Lexer *lexer, Source src) {
   lexer->column = 1;
   lexer->file = src.buffer;
   lexer->start = lexer->pos = lexer->file;
+  lexer->last = TOKEN_ILLEGAL;
 }
 
 TType lookup(char *word) {
@@ -81,14 +81,27 @@ TType lookup(char *word) {
 void l_token_append(char *token, TType ttype, Arena *stream, Lexer *l) {
   Token *new = arena_allocate(stream, sizeof(Token));
   token_new(new, ttype, l->line, l->column, token);
+  l->last = ttype;
   l->start = l->pos;
 }
 
 void lex(Arena *stream, Lexer *l) {
   while (*l->pos != '\0') {
-    while (*l->pos == ' ' || *l->pos == '\n' || *l->pos == '\r' ||
-           *l->pos == '\t') {
+    while (*l->pos == ' ' || *l->pos == '\r' || *l->pos == '\t') {
       advance(l);
+    }
+
+    if (*l->pos == '\n') {
+      if (l->last == TOKEN_IDENT || l->last == TOKEN_INT_LIT ||
+          l->last == TOKEN_FLOAT_LIT || l->last == TOKEN_STRING_LIT ||
+          l->last == TOKEN_CHAR_LIT || l->last == TOKEN_TRUE ||
+          l->last == TOKEN_FALSE || l->last == TOKEN_NONE ||
+          l->last == TOKEN_RPAREN || l->last == TOKEN_RBRACE ||
+          l->last == TOKEN_RBRACK) {
+        l_token_append(";", TOKEN_SEMI, stream, l);
+      }
+      advance(l);
+      continue;
     }
 
     if (*l->pos == '\0')

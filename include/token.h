@@ -84,7 +84,8 @@
   X(TOKEN_LBRACE)                                                              \
   X(TOKEN_RBRACE)                                                              \
   X(TOKEN_LBRACK)                                                              \
-  X(TOKEN_RBRACK)
+  X(TOKEN_RBRACK)                                                              \
+  X(TOKEN_SEMI)
 
 // generate the enum from the x-macro
 typedef enum {

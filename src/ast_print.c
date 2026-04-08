@@ -49,14 +49,16 @@ const char *decl_kind_to_str(DeclKind k) {
   }
 }
 
-// Koz Aesthetic Palette: Ghostty Red Planet Edition
+// Koz Aesthetic Palette: Seoul256 Edition (Low-contrast, balanced)
 #define KGRN                                                                   \
-  "\x1B[38;5;167m" // Decls: Terracotta/Deep Red (Function/Struct names)
-#define KBLU "\x1B[38;5;209m" // Stmts: Coral/Orange (Let, While, If)
-#define KMAG "\x1B[38;5;216m" // Exprs: Salmon/Light Orange (Binary Ops, Calls)
-#define KCYN "\x1B[38;5;223m" // Types: Sand/Cream (Int, Float, Player)
-#define KYEL "\x1B[38;5;221m" // Literals: Soft Gold (Numbers, Strings)
-#define KGRY "\x1B[38;5;240m" // Connectors: Dust/Dark Gray (│ ├── └──)
+  "\x1B[38;5;179m" // Decls: Dusty Yellow/Straw (Function/Struct names)
+#define KBLU "\x1B[38;5;108m" // Stmts: Sage Green (Let, While, If)
+#define KMAG "\x1B[38;5;110m" // Exprs: Muted Blue/Steel (Binary Ops, Calls)
+#define KCYN                                                                   \
+  "\x1B[38;5;103m" // Types: Dusty Purple/Gray-Blue (Int, Float, Player)
+#define KYEL                                                                   \
+  "\x1B[38;5;174m" // Literals: Muted Terracotta/Peach (Numbers, Strings)
+#define KGRY "\x1B[38;5;239m" // Connectors: Deep Charcoal (│ ├── └──)
 #define KNRM "\x1B[0m"        // Reset
 
 // Helper: Draws the vertical pipes for nesting

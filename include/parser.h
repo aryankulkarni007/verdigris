@@ -47,6 +47,7 @@ typedef enum {
               // Example: 2 ** 3 ** 4 = 2 ** (3 ** 4)
 
   PREC_POSTFIX, // 12 - . [ ( ? (highest)
+  PREC_UNARY,
 } Precedence;
 
 Precedence get_precedence(TType type);

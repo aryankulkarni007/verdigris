@@ -40,7 +40,7 @@
 - [ ] function types
 - [ ] import statements
 - [ ] module system
-- [ ] parse_module (top-level declaration loop)
+- [x] parse_module (top-level declaration loop)
 - [ ] error recovery and multiple error reporting
 - [ ] semantic analysis (type checking, name resolution)
 - [ ] pattern exhaustiveness checking

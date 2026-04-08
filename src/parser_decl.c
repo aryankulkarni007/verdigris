@@ -293,6 +293,8 @@ Module *parse(Arena *arena, Parser *p) {
       exit(1);
     }
     Decl *decl = parse_decl(p, arena);
+    if (CURRENT(p).ttype == TOKEN_SEMI) //  deals with synthetic semi
+      ADVANCE(p);
     local_decls[decl_count++] = decl;
   }
 

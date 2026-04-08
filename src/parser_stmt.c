@@ -116,6 +116,8 @@ Stmt *parse_block_stmt(Parser *p, Arena *a) {
     }
 
     Stmt *stmt = parse_stmt(p, a);
+    if (CURRENT(p).ttype == TOKEN_SEMI) // deals with the synthetic semi
+      ADVANCE(p);
     local_stmts[stmt_count++] = stmt;
   }
 

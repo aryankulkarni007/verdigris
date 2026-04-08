@@ -164,6 +164,8 @@ Expr *parse_block_expr(Parser *p, Arena *a) {
       exit(1);
     }
     Stmt *stmt = parse_stmt(p, a);
+    if (CURRENT(p).ttype == TOKEN_SEMI) // deals with synthetic semi
+      ADVANCE(p);
     local_stmts[stmt_count++] = stmt;
   }
 
@@ -227,36 +229,26 @@ Expr *parse_primary(Parser *p, Arena *a) {
     return parse_grouped_expr(p, a);
 
   case TOKEN_LBRACE:
-    fprintf(stderr, "error at %zu:%zu: block expressions not yet implemented\n",
-            token.line, token.column);
-    exit(1);
+    return parse_block_expr(p, a);
 
   case TOKEN_LBRACK:
-    fprintf(stderr, "error at %zu:%zu: array literals not yet implemented\n",
-            token.line, token.column);
-    exit(1);
+    // TODO: ARRAY LITERALS
 
   case TOKEN_IF:
-    fprintf(stderr, "error at %zu:%zu: if expressions not yet implemented\n",
-            token.line, token.column);
-    exit(1);
+    // TODO: IF EXPRESSIONS
 
   case TOKEN_MATCH:
-    fprintf(stderr, "error at %zu:%zu: match expressions not yet implemented\n",
-            token.line, token.column);
-    exit(1);
+    // TODO: MATCH EXPRESSIONS
 
   case TOKEN_SOME:
-    fprintf(stderr, "error at %zu:%zu: constructor calls not yet implemented\n",
-            token.line, token.column);
-    exit(1);
+    // TODO: CONSTRUCTOR CALLS
 
   case TOKEN_MINUS:
   case TOKEN_NOT:
   case TOKEN_BNOT:
-    fprintf(stderr, "error at %zu:%zu: unary expressions not yet implemented\n",
-            token.line, token.column);
-    exit(1);
+    ADVANCE(p);
+    Expr *right = parse_expr(p, a, PREC_UNARY);
+    return ast_expr_unary(a, token, right);
 
   default:
     fprintf(stderr, "error at %zu:%zu: unexpected token '%s' in expression\n",
@@ -302,6 +294,8 @@ Precedence get_precedence(TType type) {
   case TOKEN_LBRACK:
   case TOKEN_QUESTION:
     return PREC_POSTFIX;
+  case TOKEN_SEMI:
+    return PREC_NONE;
   default:
     return PREC_NONE;
   }
