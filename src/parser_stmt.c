@@ -48,13 +48,8 @@ Stmt *parse_op_assign_stmt(Parser *p, Arena *a, Expr *target) {
   Token op = CURRENT(p);
   ADVANCE(p);
   Expr *value = parse_expr(p, a, PREC_NONE);
-  Stmt *node = arena_allocate(a, sizeof(Stmt));
-  node->kind = S_OP_ASSIGN;
-  node->token = op;
-  node->as.op_assign.op = op;
-  node->as.op_assign.target = target;
-  node->as.op_assign.value = value;
-  return node;
+
+  return ast_stmt_op_assign(a, op, target, value);
 }
 
 Stmt *parse_assign_stmt(Parser *p, Arena *a, Expr *e) {

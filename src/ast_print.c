@@ -257,6 +257,18 @@ void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last) {
                      i == e->as.array_init.count - 1);
     break;
 
+  case E_STRUCT:
+    printf(": " KNRM "%s\n", e->as._struct.struct_name);
+    for (size_t i = 0; i < e->as._struct.field_count; i++) {
+      bool last = i == e->as._struct.field_count - 1;
+      print_branch(indent + 1, last_mask, last);
+      printf(KGRY "%s" KNRM " =\n", e->as._struct.fields[i].name);
+      last_mask[indent] = last;
+      ast_print_expr(e->as._struct.fields[i].value, indent + 2, last_mask,
+                     true);
+    }
+    break;
+
   case E_NONE:
     printf(": " KYEL "none" KNRM "\n");
     break;

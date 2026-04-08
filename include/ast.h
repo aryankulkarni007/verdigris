@@ -201,7 +201,7 @@ struct Expr {
         struct Expr *value;
       } *fields;
       size_t field_count;
-    } struct_init;
+    } _struct;
 
     struct {
       struct Expr **elements;
@@ -341,9 +341,9 @@ Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
 
 Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t count);
 
-// TODO: struct literal builder
-// Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name, FieldInit
-// *fields, size_t field_count);
+// struct literal builder
+Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name,
+                      size_t field_count, char **names, Expr **values);
 
 // TODO: range builder
 // Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end, bool
@@ -370,10 +370,9 @@ Stmt *ast_stmt_loop(Arena *arena, Token token, Stmt *body);
 Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
                    Stmt *body);
 
-// TODO: assignment statement builders
 Stmt *ast_stmt_assign(Arena *arena, Token token, Expr *target, Expr *value);
-// Stmt *ast_stmt_op_assign(Arena *arena, Token op_token, Expr *target, Expr
-// *value);
+Stmt *ast_stmt_op_assign(Arena *arena, Token op_token, Expr *target,
+                         Expr *value);
 
 // TODO: import statement builder
 // Stmt *ast_stmt_import(Arena *arena, Token token, char *path);

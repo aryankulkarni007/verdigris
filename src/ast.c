@@ -180,6 +180,27 @@ Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t count) {
   return node;
 }
 
+Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name,
+                      size_t field_count, char **names, Expr **values) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_STRUCT;
+  node->token = token;
+  node->as._struct.struct_name = struct_name;
+  node->as._struct.field_count = field_count;
+  node->as._struct.fields = NULL;
+
+  if (field_count > 0) {
+    node->as._struct.fields =
+        arena_allocate(arena, field_count * sizeof(*node->as._struct.fields));
+    for (size_t i = 0; i < field_count; i++) {
+      node->as._struct.fields[i].name = names[i];
+      node->as._struct.fields[i].value = values[i];
+    }
+  }
+
+  return node;
+}
+
 Stmt *ast_stmt_break(Arena *arena, Token token) {
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
   node->kind = S_BREAK;
@@ -242,6 +263,16 @@ Stmt *ast_stmt_assign(Arena *arena, Token token, Expr *target, Expr *value) {
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
   node->kind = S_ASSIGN;
   node->token = token;
+  node->as.assign.target = target;
+  node->as.assign.value = value;
+  return node;
+}
+
+Stmt *ast_stmt_op_assign(Arena *arena, Token op_token, Expr *target,
+                         Expr *value) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_OP_ASSIGN;
+  node->token = op_token;
   node->as.assign.target = target;
   node->as.assign.value = value;
   return node;

@@ -99,8 +99,9 @@ Expr *parse_array_expr(Parser *parser, Arena *arena);
 Expr *parse_if_expr(Parser *parser, Arena *arena);
 Expr *parse_match_expr(Parser *parser, Arena *arena);
 Expr *parse_unary_expr(Parser *parser, Arena *arena);
+Expr *parse_struct_expr(Parser *p, Arena *a, Token name_tok);
 
-// TODO: parse stmt helper
+// parse stmt helper
 Stmt *parse_stmt(Parser *p, Arena *a);
 Stmt *parse_let_stmt(Parser *p, Arena *a);
 Stmt *parse_while_stmt(Parser *p, Arena *a);

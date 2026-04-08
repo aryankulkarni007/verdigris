@@ -131,6 +131,9 @@ Expr *parse_name(Parser *p, Arena *a) {
 
   switch (tok.ttype) {
   case TOKEN_IDENT:
+    if (CURRENT(p).ttype == TOKEN_LBRACE) {
+      return parse_struct_expr(p, a, tok);
+    }
     return ast_expr_ident(a, tok, arena_strdup(a, tok.token));
   case TOKEN_UNDERSCORE:
     return ast_expr_ident(a, tok, "_");
@@ -140,6 +143,45 @@ Expr *parse_name(Parser *p, Arena *a) {
             tok.line, tok.column, tok.token);
     exit(1);
   }
+}
+
+Expr *parse_struct_expr(Parser *p, Arena *a, Token name_tok) {
+  ADVANCE(p); // consume '{'
+
+  char *local_names[256];
+  Expr *local_values[256];
+  size_t field_count = 0;
+
+  while (CURRENT(p).ttype != TOKEN_RBRACE && !IS_AT_END(p)) {
+    if (CURRENT(p).ttype != TOKEN_IDENT) {
+      fprintf(stderr, "error at %zu:%zu: expected field name, got '%s'\n",
+              CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
+      exit(1);
+    }
+    Token field_name = CURRENT(p);
+    ADVANCE(p);
+
+    EXPECT(p, TOKEN_ASSIGN, "expected '=' after field name");
+
+    Expr *value = parse_expr(p, a, PREC_NONE);
+
+    local_names[field_count] = arena_strdup(a, field_name.token);
+    local_values[field_count] = value;
+    field_count++;
+
+    if (CURRENT(p).ttype == TOKEN_COMMA)
+      ADVANCE(p);
+    else if (CURRENT(p).ttype != TOKEN_RBRACE) {
+      fprintf(stderr, "error at %zu:%zu: expected ',' or '}' after field\n",
+              CURRENT(p).line, CURRENT(p).column);
+      exit(1);
+    }
+  }
+
+  EXPECT(p, TOKEN_RBRACE, "expected '}' after struct literal");
+
+  return ast_expr_struct(a, name_tok, arena_strdup(a, name_tok.token),
+                         field_count, local_names, local_values);
 }
 
 Expr *parse_grouped_expr(Parser *p, Arena *a) {

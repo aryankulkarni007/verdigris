@@ -23,13 +23,13 @@
 - [x] block statements
 - [x] expression statements
 - [x] type parsing (primitives, names, arrays)
-- [ ] unary operators (-, !, ~)
-- [ ] array literals [1, 2, 3]
-- [ ] if expressions
+- [x] unary operators (-, !, ~)
+- [x] array literals [1, 2, 3]
+- [x] if expressions
 - [ ] match expressions
 - [ ] constructor calls (some, none)
 - [ ] range operator (.., ..=)
-- [ ] assignment statements (=, +=, -=, \*=, /=, %=)
+- [x] assignment statements (=, +=, -=, \*=, /=, %=)
 - [x] struct declarations
 - [x] enum declarations
 - [x] function declarations
