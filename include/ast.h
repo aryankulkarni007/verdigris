@@ -238,13 +238,11 @@ struct Stmt {
       Expr *init;
     } let_binding;
 
-    // TODO: implement assignment statements
     struct {
       Expr *target; // for x.y = ...
       Expr *value;
     } assign;
 
-    // TODO: implement compound assignment statements
     struct {
       Token op; // Store the += or -= token here
       Expr *target;
@@ -373,7 +371,7 @@ Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
                    Stmt *body);
 
 // TODO: assignment statement builders
-// Stmt *ast_stmt_assign(Arena *arena, Token token, Expr *target, Expr *value);
+Stmt *ast_stmt_assign(Arena *arena, Token token, Expr *target, Expr *value);
 // Stmt *ast_stmt_op_assign(Arena *arena, Token op_token, Expr *target, Expr
 // *value);
 

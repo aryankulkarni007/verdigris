@@ -110,7 +110,8 @@ Stmt *parse_return_stmt(Parser *p, Arena *a);
 Stmt *parse_break_stmt(Parser *p, Arena *a);
 Stmt *parse_continue_stmt(Parser *p, Arena *a);
 Stmt *parse_block_stmt(Parser *p, Arena *a);
-Stmt *ast_stmt_expr(Arena *a, Token token, Expr *e); // you need this builder
+Stmt *parse_assign_stmt(Parser *p, Arena *a, Expr *target);    // hack
+Stmt *parse_op_assign_stmt(Parser *p, Arena *a, Expr *target); // hack
 
 // Module and declarations
 Decl *parse_decl(Parser *p, Arena *a);

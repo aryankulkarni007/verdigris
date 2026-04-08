@@ -332,6 +332,19 @@ void ast_print_stmt(Stmt *s, int indent, bool *last_mask, bool is_last) {
     printf("\n");
     ast_print_stmt(s->as._loop.body, indent + 1, last_mask, true);
     break;
+
+  case S_ASSIGN:
+    printf("\n");
+    ast_print_expr(s->as.assign.target, indent + 1, last_mask, false);
+    ast_print_expr(s->as.assign.value, indent + 1, last_mask, true);
+    break;
+
+  case S_OP_ASSIGN:
+    printf(": " KNRM "%s\n", s->as.op_assign.op.token);
+    ast_print_expr(s->as.op_assign.target, indent + 1, last_mask, false);
+    ast_print_expr(s->as.op_assign.value, indent + 1, last_mask, true);
+    break;
+
   default:
     printf("\n");
     break;

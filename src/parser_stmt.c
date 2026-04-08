@@ -28,9 +28,41 @@ Stmt *parse_stmt(Parser *p, Arena *a) {
   default: {
     Token token = CURRENT(p);
     Expr *e = parse_expr(p, a, PREC_NONE);
+
+    if (CURRENT(p).ttype == TOKEN_ASSIGN) {
+      return parse_assign_stmt(p, a, e);
+    } else if (CURRENT(p).ttype == TOKEN_PLUS_ASSIGN ||
+               CURRENT(p).ttype == TOKEN_MINUS_ASSIGN ||
+               CURRENT(p).ttype == TOKEN_STAR_ASSIGN ||
+               CURRENT(p).ttype == TOKEN_SLASH_ASSIGN ||
+               CURRENT(p).ttype == TOKEN_PERCENT_ASSIGN) {
+      return parse_op_assign_stmt(p, a, e);
+    }
+
     return ast_stmt_expr(a, token, e);
   }
   }
+}
+
+Stmt *parse_op_assign_stmt(Parser *p, Arena *a, Expr *target) {
+  Token op = CURRENT(p);
+  ADVANCE(p);
+  Expr *value = parse_expr(p, a, PREC_NONE);
+  Stmt *node = arena_allocate(a, sizeof(Stmt));
+  node->kind = S_OP_ASSIGN;
+  node->token = op;
+  node->as.op_assign.op = op;
+  node->as.op_assign.target = target;
+  node->as.op_assign.value = value;
+  return node;
+}
+
+Stmt *parse_assign_stmt(Parser *p, Arena *a, Expr *e) {
+  Token token = CURRENT(p);
+  ADVANCE(p);
+
+  Expr *value = parse_expr(p, a, PREC_NONE);
+  return ast_stmt_assign(a, token, e, value);
 }
 
 Stmt *parse_for_stmt(Parser *p, Arena *a) {

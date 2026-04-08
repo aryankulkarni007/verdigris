@@ -238,6 +238,15 @@ Stmt *ast_stmt_for(Arena *arena, Token token, char *iterator, Expr *iterable,
   return node;
 }
 
+Stmt *ast_stmt_assign(Arena *arena, Token token, Expr *target, Expr *value) {
+  Stmt *node = arena_allocate(arena, sizeof(Stmt));
+  node->kind = S_ASSIGN;
+  node->token = token;
+  node->as.assign.target = target;
+  node->as.assign.value = value;
+  return node;
+}
+
 Decl *ast_decl_impl(Arena *arena, Token token, Type *target_type,
                     Decl **methods, size_t method_count) {
   Decl *node = arena_allocate(arena, sizeof(Decl));
