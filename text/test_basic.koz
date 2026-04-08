@@ -1,15 +1,7 @@
--- basic parser test
-struct Player {
-    x: float,
-    y: float
-}
-
-add(a, b) :: (int, int) -> int {
-    a + b
-}
-
 main() :: () -> int {
     let x = 5
-    let y = 10
-    let z = add(x, y)
+    if x == 5 {
+        10
+    }
+    x
 }

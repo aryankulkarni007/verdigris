@@ -238,6 +238,18 @@ void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last) {
     ast_print_expr(e->as.range.end, indent + 1, last_mask, true);
     break;
 
+  case E_IF:
+    printf("\n");
+    ast_print_expr(e->as.if_expr.condition, indent + 1, last_mask,
+                   e->as.if_expr.then_block == NULL &&
+                       e->as.if_expr.else_block == NULL);
+    if (e->as.if_expr.then_block)
+      ast_print_stmt(e->as.if_expr.then_block, indent + 1, last_mask,
+                     e->as.if_expr.else_block == NULL);
+    if (e->as.if_expr.else_block)
+      ast_print_stmt(e->as.if_expr.else_block, indent + 1, last_mask, true);
+    break;
+
   case E_NONE:
     printf(": " KYEL "none" KNRM "\n");
     break;
@@ -328,10 +340,25 @@ void ast_print_decl(Decl *d, int indent, bool *last_mask, bool is_last) {
   printf("[" KGRN "%s" KNRM "]", decl_kind_to_str(d->kind));
 
   switch (d->kind) {
-  case D_FUNC:
-    printf(": " KNRM "%s\n", d->as.function.name);
-    ast_print_stmt(d->as.function.body, indent + 1, last_mask, true);
+
+  case D_FUNC: {
+    printf(": " KNRM "%s", d->as.function.name);
+    // print params inline
+    printf(" (");
+    for (size_t i = 0; i < d->as.function.param_count; i++) {
+      Param *param = &d->as.function.params[i];
+      printf("%s: ", param->name);
+      ast_print_type(param->type);
+      if (i < d->as.function.param_count - 1)
+        printf(", ");
+    }
+    printf(") -> ");
+    ast_print_type(d->as.function.return_type);
+    printf("\n");
+    if (d->as.function.body)
+      ast_print_stmt(d->as.function.body, indent + 1, last_mask, true);
     break;
+  }
 
   case D_STRUCT:
     printf(": " KNRM "%s (%zu field(s))\n", d->as._struct.name,
@@ -404,7 +431,7 @@ void ast_print_module(Module *m) {
 }
 
 void run_ast_print_tests(void) {
-  printf("Starting Koz AST Visualizer Test...\n");
+  printf("AST visualizer test...\n");
   printf("==================================\n\n");
 
   Token t_plus;

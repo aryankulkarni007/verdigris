@@ -145,6 +145,29 @@ Stmt *parse_break_stmt(Parser *p, Arena *a) {
   return ast_stmt_break(a, tok);
 }
 
+Stmt *parse_continue_stmt(Parser *p, Arena *a) {
+  Token token = CURRENT(p);
+  ADVANCE(p);
+  return ast_stmt_continue(a, token);
+}
+
+Stmt *parse_return_stmt(Parser *p, Arena *a) {
+  Token token = CURRENT(p);
+  ADVANCE(p);
+
+  Expr *value = NULL;
+  if (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
+    value = parse_expr(p, a, PREC_NONE);
+  }
+  return ast_stmt_return(a, token, value);
+}
+
+Stmt *parse_expr_stmt(Parser *p, Arena *a) {
+  Token start = CURRENT(p);
+  Expr *e = parse_expr(p, a, PREC_NONE);
+  return ast_stmt_expr(a, start, e);
+}
+
 Type *parse_type(Parser *p, Arena *a) {
   Token token = CURRENT(p);
 

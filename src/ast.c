@@ -137,6 +137,17 @@ Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
   return node;
 }
 
+Expr *ast_expr_if(Arena *arena, Token token, Expr *condition, Stmt *then_expr,
+                  Stmt *else_expr) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_IF;
+  node->token = token;
+  node->as.if_expr.condition = condition;
+  node->as.if_expr.then_block = then_expr;
+  node->as.if_expr.else_block = else_expr;
+  return node;
+}
+
 Stmt *ast_stmt_let(Arena *arena, Token token, char *name, bool is_mut,
                    Type *type_annotation, Expr *init) {
   Stmt *node = arena_allocate(arena, sizeof(Stmt));

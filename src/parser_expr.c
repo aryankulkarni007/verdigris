@@ -185,27 +185,36 @@ Expr *parse_block_expr(Parser *p, Arena *a) {
   return ast_expr_block(a, start, stmts, stmt_count, tail);
 }
 
-Stmt *parse_continue_stmt(Parser *p, Arena *a) {
-  Token token = CURRENT(p);
-  ADVANCE(p);
-  return ast_stmt_continue(a, token);
-}
-
-Stmt *parse_return_stmt(Parser *p, Arena *a) {
-  Token token = CURRENT(p);
+Expr *parse_if_expr(Parser *p, Arena *a) {
+  Token if_tok = CURRENT(p);
   ADVANCE(p);
 
-  Expr *value = NULL;
-  if (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
-    value = parse_expr(p, a, PREC_NONE);
+  Expr *condition = parse_expr(p, a, PREC_NONE);
+  if (CURRENT(p).ttype != TOKEN_LBRACE) {
+    fprintf(stderr, "error at %zu:%zu: expected '{' after if condition\n",
+            CURRENT(p).line, CURRENT(p).column);
+    exit(1);
   }
-  return ast_stmt_return(a, token, value);
-}
 
-Stmt *parse_expr_stmt(Parser *p, Arena *a) {
-  Token start = CURRENT(p);
-  Expr *e = parse_expr(p, a, PREC_NONE);
-  return ast_stmt_expr(a, start, e);
+  Stmt *then_block = parse_block_stmt(p, a);
+  Stmt *else_block = NULL;
+  if (CURRENT(p).ttype == TOKEN_SEMI)
+    ADVANCE(p);
+  if (CURRENT(p).ttype == TOKEN_ELSE) {
+    ADVANCE(p);
+    if (CURRENT(p).ttype == TOKEN_IF) {
+      // else if means recursion
+      Expr *else_if = parse_if_expr(p, a);
+      else_block = ast_stmt_expr(a, CURRENT(p), else_if);
+    } else if (CURRENT(p).ttype == TOKEN_LBRACE) {
+      else_block = parse_block_stmt(p, a);
+    } else {
+      fprintf(stderr, "error at %zu:%zu: expected '{' or 'if' after else\n",
+              CURRENT(p).line, CURRENT(p).column);
+      exit(1);
+    }
+  }
+  return ast_expr_if(a, if_tok, condition, then_block, else_block);
 }
 
 Expr *parse_primary(Parser *p, Arena *a) {
@@ -235,7 +244,7 @@ Expr *parse_primary(Parser *p, Arena *a) {
     // TODO: ARRAY LITERALS
 
   case TOKEN_IF:
-    // TODO: IF EXPRESSIONS
+    return parse_if_expr(p, a);
 
   case TOKEN_MATCH:
     // TODO: MATCH EXPRESSIONS

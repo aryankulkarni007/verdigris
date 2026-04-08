@@ -354,8 +354,8 @@ Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
 // is_inclusive);
 
 // TODO: if expression builder
-// Expr *ast_expr_if(Arena *arena, Token token, Expr *condition, Expr
-// *then_expr, Expr *else_expr);
+Expr *ast_expr_if(Arena *arena, Token token, Expr *condition, Stmt *then_expr,
+                  Stmt *else_expr);
 
 // TODO: match expression builder
 // Expr *ast_expr_match(Arena *arena, Token token, Expr *target, MatchArm *arms,
