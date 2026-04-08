@@ -58,6 +58,13 @@ typedef struct {
 } Parser;
 
 // helpers
+
+// DEBUG CURRENT MACRO : SUPER USEFUL
+// #define CURRENT(p) \
+//   (printf("CURRENT: pos=%zu, token='%s', ttype=%d\n", (p)->pos, \
+//           (p)->tokens[(p)->pos].token, (p)->tokens[(p)->pos].ttype), \
+//           (p)->tokens[(p)->pos])
+
 #define CURRENT(p) ((p)->tokens[(p)->pos])
 #define PEEK(p) ((p)->tokens[(p)->pos + 1])
 #define PEEK_NEXT(p) ((p)->tokens[(p)->pos + 2])

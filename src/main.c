@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "../include/arena.h"
+#include "../include/ast.h"
 #include "../include/lexer.h"
 #include "../include/main.h"
 #include "../include/parser.h"
@@ -10,7 +11,6 @@
 
 void print_usage(char *exec);
 Source file_handler(char *path);
-void run_all_tests(void);
 
 /// WARNING: remember to free buffer
 void print_usage(char *exec) {
@@ -49,16 +49,13 @@ Source file_handler(char *path) {
   return (Source){.file_size = (size_t)file_size, .buffer = buffer};
 }
 
-void run_all_tests(void) {
-  run_ast_tests();
-  run_parser_tests();
-}
-
 int main(int argc, char *argv[]) {
-  if (argc > 1 && strcmp(argv[1], "--test") == 0) {
-    run_all_tests();
-    return 0;
-  }
+  // UNCOMMENT TO RUN TESTS
+  // if (argc > 1 && strcmp(argv[1], "--test") == 0) {
+  //   run_ast_tests();
+  //   run_parser_tests();
+  //   return 0;
+  // }
 
   // normal operation requires a file
   if (argc < 2) {
@@ -78,12 +75,13 @@ int main(int argc, char *argv[]) {
 
   size_t token_count = 0;
   while (stream[token_count].ttype != TOKEN_EOF) {
+    // token_print(&stream[token_count]);
     token_count++;
   }
 
   // AST arena
   Arena ast_arena;
-  size_t ast_size = src.file_size * 32;
+  size_t ast_size = src.file_size * 128;
   void *ast_buffer = malloc(ast_size);
   arena_init(&ast_arena, ast_buffer, ast_size);
 

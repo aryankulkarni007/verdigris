@@ -26,8 +26,9 @@ Stmt *parse_stmt(Parser *p, Arena *a) {
     // and the other is Expr*, under the hood they are the same struct
     return parse_block_stmt(p, a);
   default: {
+    Token token = CURRENT(p);
     Expr *e = parse_expr(p, a, PREC_NONE);
-    return ast_stmt_expr(a, CURRENT(p), e);
+    return ast_stmt_expr(a, token, e);
   }
   }
 }
@@ -127,12 +128,12 @@ Stmt *parse_block_stmt(Parser *p, Arena *a) {
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after block expression");
 
-  // Allocate exact array in arena and copy pointers
-  Stmt **stmts = arena_allocate(a, stmt_count * sizeof(Stmt *));
-  for (size_t i = 0; i < stmt_count; i++) {
-    stmts[i] = local_stmts[i];
+  Stmt **stmts = NULL;
+  if (stmt_count > 0) {
+    stmts = arena_allocate(a, stmt_count * sizeof(Stmt *));
+    for (size_t i = 0; i < stmt_count; i++)
+      stmts[i] = local_stmts[i];
   }
-
   return ast_stmt_block(a, start, stmts, stmt_count, NULL);
 }
 

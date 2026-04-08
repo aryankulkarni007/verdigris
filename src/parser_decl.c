@@ -19,9 +19,11 @@ Decl *parse_extern_decl(Parser *p, Arena *a) {
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after extern block");
 
-  Decl **decls = arena_allocate(a, decl_count * sizeof(Decl *));
-  for (size_t i = 0; i < decl_count; ++i) {
-    decls[i] = local_decls[i];
+  Decl **decls = NULL;
+  if (decl_count > 0) {
+    decls = arena_allocate(a, decl_count * sizeof(Decl *));
+    for (size_t i = 0; i < decl_count; i++)
+      decls[i] = local_decls[i];
   }
 
   return ast_decl_extern(a, extern_token, decls, decl_count);
@@ -44,10 +46,13 @@ Decl *parse_impl_decl(Parser *p, Arena *a) {
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after impl body");
 
-  Decl **methods = arena_allocate(a, method_count * sizeof(Decl *));
-  for (size_t i = 0; i < method_count; i++) {
-    methods[i] = local_methods[i];
+  Decl **methods = NULL;
+  if (method_count > 0) {
+    methods = arena_allocate(a, method_count * sizeof(Decl *));
+    for (size_t i = 0; i < method_count; i++)
+      methods[i] = local_methods[i];
   }
+
   return ast_decl_impl(a, at_token, target_type, methods, method_count);
 }
 
@@ -117,10 +122,13 @@ Decl *parse_func_decl(Parser *p, Arena *a) {
     body = parse_block_stmt(p, a);
   }
 
-  Param *params = arena_allocate(a, name_count * sizeof(Param));
-  for (size_t i = 0; i < name_count; i++) {
-    params[i].name = local_names[i];
-    params[i].type = local_types[i];
+  Param *params = NULL;
+  if (name_count > 0) {
+    params = arena_allocate(a, name_count * sizeof(Param));
+    for (size_t i = 0; i < name_count; i++) {
+      params[i].name = local_names[i];
+      params[i].type = local_types[i];
+    }
   }
 
   return ast_decl_func(a, func_token, func_name, params, name_count,
@@ -182,9 +190,11 @@ Decl *parse_enum_decl(Parser *p, Arena *a) {
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after enum body");
 
-  Variant *variants = arena_allocate(a, variant_count * sizeof(Variant));
-  for (size_t i = 0; i < variant_count; i++) {
-    variants[i] = local_variants[i];
+  Variant *variants = NULL;
+  if (variant_count > 0) {
+    variants = arena_allocate(a, variant_count * sizeof(Variant));
+    for (size_t i = 0; i < variant_count; i++)
+      variants[i] = local_variants[i];
   }
 
   return ast_decl_enum(a, enum_token, name, variants, variant_count);
@@ -243,9 +253,12 @@ Decl *parse_struct_decl(Parser *p, Arena *a) {
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after struct body");
 
-  Field *fields = arena_allocate(a, field_count * sizeof(Field));
-  for (size_t i = 0; i < field_count; i++)
-    fields[i] = local_fields[i];
+  Field *fields = NULL;
+  if (field_count > 0) {
+    fields = arena_allocate(a, field_count * sizeof(Field));
+    for (size_t i = 0; i < field_count; i++)
+      fields[i] = local_fields[i];
+  }
 
   return ast_decl_struct(a, struct_token, name, fields, field_count);
 }

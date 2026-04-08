@@ -60,10 +60,13 @@ Expr *parse_infix(Parser *p, Arena *a, Expr *left, Token op) {
 
     EXPECT(p, TOKEN_RPAREN, "expected ')' after arguments");
 
-    Expr **args = arena_allocate(a, arg_count * sizeof(Expr *));
-    for (size_t i = 0; i < arg_count; i++) {
-      args[i] = local_args[i];
+    Expr **args = NULL;
+    if (arg_count > 0) {
+      args = arena_allocate(a, arg_count * sizeof(Expr *));
+      for (size_t i = 0; i < arg_count; i++)
+        args[i] = local_args[i];
     }
+
     return ast_expr_call(a, op, left, args, arg_count);
   }
 
@@ -85,8 +88,10 @@ Expr *parse_infix(Parser *p, Arena *a, Expr *left, Token op) {
 
 Expr *parse_expr(Parser *p, Arena *a, Precedence min_prec) {
   Expr *left = parse_primary(p, a);
-  while (get_precedence(PEEK(p).ttype) > min_prec) {
-    Token op = ADVANCE(p);
+  // DEBUG : CURRENT WAS PEEK BEFORE
+  while (get_precedence(CURRENT(p).ttype) > min_prec) {
+    Token op = CURRENT(p);
+    ADVANCE(p);
     left = parse_infix(p, a, left, op);
   }
   return left;
@@ -158,8 +163,8 @@ Expr *parse_block_expr(Parser *p, Arena *a) {
               start.line, start.column);
       exit(1);
     }
-    // TODO: Stmt *stmt = parse_stmt(p, a);
-    // local_stmts[stmt_count++] = stmt;
+    Stmt *stmt = parse_stmt(p, a);
+    local_stmts[stmt_count++] = stmt;
   }
 
   if (CURRENT(p).ttype != TOKEN_RBRACE) {
@@ -168,9 +173,11 @@ Expr *parse_block_expr(Parser *p, Arena *a) {
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after block expression");
 
-  Stmt **stmts = arena_allocate(a, stmt_count * sizeof(Stmt *));
-  for (size_t i = 0; i < stmt_count; i++) {
-    stmts[i] = local_stmts[i];
+  Stmt **stmts = NULL;
+  if (stmt_count > 0) {
+    stmts = arena_allocate(a, stmt_count * sizeof(Stmt *));
+    for (size_t i = 0; i < stmt_count; i++)
+      stmts[i] = local_stmts[i];
   }
 
   return ast_expr_block(a, start, stmts, stmt_count, tail);

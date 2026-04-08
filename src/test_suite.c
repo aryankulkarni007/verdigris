@@ -4,8 +4,6 @@
 
 /* AI GENERATED TEST - PROCDEED WITH CAUTION */
 
-void run_parser_tests(void); // declared in test_parser.c
-
 // Helper to mock tokens for the visualizer
 static Token mock_token(const char *lexeme) {
   Token t = {.line = 1, .column = 1};
