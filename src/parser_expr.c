@@ -217,6 +217,31 @@ Expr *parse_if_expr(Parser *p, Arena *a) {
   return ast_expr_if(a, if_tok, condition, then_block, else_block);
 }
 
+Expr *parse_array_expr(Parser *p, Arena *a) {
+  Token token = CURRENT(p);
+  ADVANCE(p);
+
+  Expr *local_elements[256];
+  size_t count = 0;
+
+  if (CURRENT(p).ttype != TOKEN_RBRACK) {
+    local_elements[count++] = parse_expr(p, a, PREC_NONE);
+    while (CURRENT(p).ttype == TOKEN_COMMA) {
+      ADVANCE(p);
+      local_elements[count++] = parse_expr(p, a, PREC_NONE);
+    }
+  }
+
+  EXPECT(p, TOKEN_RBRACK, "expected ']' after array elements");
+  Expr **elements = NULL;
+  if (count > 0) {
+    elements = arena_allocate(a, count * sizeof(Expr *));
+    for (size_t i = 0; i < count; i++)
+      elements[i] = local_elements[i];
+  }
+  return ast_expr_array(a, token, elements, count);
+}
+
 Expr *parse_primary(Parser *p, Arena *a) {
   Token token = CURRENT(p);
 
@@ -241,7 +266,7 @@ Expr *parse_primary(Parser *p, Arena *a) {
     return parse_block_expr(p, a);
 
   case TOKEN_LBRACK:
-    // TODO: ARRAY LITERALS
+    return parse_array_expr(p, a);
 
   case TOKEN_IF:
     return parse_if_expr(p, a);

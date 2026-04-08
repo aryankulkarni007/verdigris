@@ -341,9 +341,7 @@ Expr *ast_expr_call(Arena *arena, Token token, Expr *callee, Expr **args,
 Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
                      Expr *tail);
 
-// TODO: array literal builder
-// Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t
-// count);
+Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t count);
 
 // TODO: struct literal builder
 // Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name, FieldInit
@@ -353,7 +351,6 @@ Expr *ast_expr_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
 // Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end, bool
 // is_inclusive);
 
-// TODO: if expression builder
 Expr *ast_expr_if(Arena *arena, Token token, Expr *condition, Stmt *then_expr,
                   Stmt *else_expr);
 

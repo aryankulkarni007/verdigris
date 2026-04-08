@@ -250,6 +250,13 @@ void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last) {
       ast_print_stmt(e->as.if_expr.else_block, indent + 1, last_mask, true);
     break;
 
+  case E_ARRAY:
+    printf("\n");
+    for (size_t i = 0; i < e->as.array_init.count; i++)
+      ast_print_expr(e->as.array_init.elements[i], indent + 1, last_mask,
+                     i == e->as.array_init.count - 1);
+    break;
+
   case E_NONE:
     printf(": " KYEL "none" KNRM "\n");
     break;

@@ -171,6 +171,15 @@ Stmt *ast_stmt_block(Arena *arena, Token token, Stmt **stmts, size_t stmt_count,
   return node;
 }
 
+Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t count) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_ARRAY;
+  node->token = token;
+  node->as.array_init.elements = elements;
+  node->as.array_init.count = count;
+  return node;
+}
+
 Stmt *ast_stmt_break(Arena *arena, Token token) {
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
   node->kind = S_BREAK;
