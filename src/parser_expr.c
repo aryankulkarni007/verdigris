@@ -131,7 +131,7 @@ Expr *parse_name(Parser *p, Arena *a) {
 
   switch (tok.ttype) {
   case TOKEN_IDENT:
-    return ast_expr_ident(a, tok, tok.token);
+    return ast_expr_ident(a, tok, arena_strdup(a, tok.token));
   case TOKEN_UNDERSCORE:
     return ast_expr_ident(a, tok, "_");
   default:

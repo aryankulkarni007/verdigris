@@ -36,7 +36,6 @@
   X(TOKEN_RETURN)                                                              \
   X(TOKEN_IMPORT)                                                              \
   X(TOKEN_MODULE)                                                              \
-  X(TOKEN_PRIVATE)                                                             \
   X(TOKEN_TYPE)                                                                \
   X(TOKEN_EXTERN)                                                              \
   X(TOKEN_TRUE)                                                                \

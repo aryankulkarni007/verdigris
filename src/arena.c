@@ -1,5 +1,6 @@
 #include "../include/arena.h"
 #include <stdio.h>
+#include <string.h>
 
 /// user must call malloc on buffer and pass the buffer into this function
 void arena_init(Arena *arena, void *buffer, size_t cap) {

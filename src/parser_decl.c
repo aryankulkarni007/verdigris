@@ -1,3 +1,4 @@
+#include "../include/arena.h"
 #include "../include/ast.h"
 #include "../include/parser.h"
 #include <stdio.h>
@@ -63,7 +64,7 @@ Decl *parse_func_decl(Parser *p, Arena *a) {
             func_token.line, func_token.column, func_token.token);
     exit(1);
   }
-  char *func_name = func_token.token;
+  char *func_name = arena_strdup(a, func_token.token);
   ADVANCE(p);
 
   EXPECT(p, TOKEN_LPAREN, "expected '(' after function name");
@@ -78,7 +79,7 @@ Decl *parse_func_decl(Parser *p, Arena *a) {
                 CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
         exit(1);
       }
-      local_names[name_count++] = CURRENT(p).token;
+      local_names[name_count++] = arena_strdup(a, CURRENT(p).token);
       ADVANCE(p);
 
       if (CURRENT(p).ttype == TOKEN_RPAREN)
@@ -238,7 +239,7 @@ Decl *parse_struct_decl(Parser *p, Arena *a) {
 
     Type *field_type = parse_type(p, a);
 
-    local_fields[field_count].name = field_name.token;
+    local_fields[field_count].name = arena_strdup(a, field_name.token);
     local_fields[field_count].type = field_type;
     ++field_count;
 

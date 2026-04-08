@@ -69,7 +69,7 @@ Stmt *parse_let_stmt(Parser *p, Arena *a) {
     exit(1);
   }
   Token ident = CURRENT(p);
-  char *name = ident.token;
+  char *name = arena_strdup(a, ident.token);
   ADVANCE(p);
 
   Type *_type = NULL;
@@ -157,7 +157,7 @@ Type *parse_type(Parser *p, Arena *a) {
 
   case TOKEN_IDENT:
     ADVANCE(p);
-    return ast_type_name(a, token, token.token);
+    return ast_type_name(a, token, arena_strdup(a, token.token));
 
   case TOKEN_LBRACK:
     // Array type [T]
