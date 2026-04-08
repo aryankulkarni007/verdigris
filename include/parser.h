@@ -8,9 +8,10 @@
 #include <stddef.h>
 
 typedef enum {
-  PREC_NONE, // 0 - Starting point for parse_expr().
-             // Consumes everything until EOF or low-precedence operator.
-             // Use when: parse_expr(arena, p, PREC_NONE)
+  PREC_NONE,  // 0 - Starting point for parse_expr().
+              // Consumes everything until EOF or low-precedence operator.
+              // Use when: parse_expr(arena, p, PREC_NONE)
+  PREC_RANGE, // .. and ..=
 
   PREC_LOGICAL_OR, // 1 - || (lowest binary operator)
                    // Right side uses PREC_LOGICAL_OR (left-associative)
@@ -81,6 +82,7 @@ typedef struct {
   ADVANCE(p)
 
 Type *parse_type(Parser *p, Arena *a);
+Decl *parse_type_alias(Parser *p, Arena *a);
 
 // main functions
 void parser_new(Parser *parser, Token *stream, size_t count);

@@ -11,7 +11,7 @@ enum GameEvent {
     PlayerMoved(Player),
     PlayerDied(Player),
     BulletFired(Bullet),
-    RoundOver
+    RoundOver,
 }
 
 -- impl block
@@ -78,8 +78,8 @@ test_ops(x, y) :: (int, int) -> int {
     k
 }
 
--- ranges and collections
-test_ranges() :: () -> () {
+-- ____ranges and collections
+test_____ranges() :: () -> () {
     let full  = 0..10
     let incl  = 0..=10
     let items: [int] = [1, 2, 3, 4, 5]

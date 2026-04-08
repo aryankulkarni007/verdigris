@@ -79,6 +79,13 @@ Expr *parse_infix(Parser *p, Arena *a, Expr *left, Token op) {
   case TOKEN_QUESTION:
     return ast_expr_unary(a, op, left);
 
+    // no builder for this it is kinda niche
+  case TOKEN_DOTDOT:
+  case TOKEN_DOTDOTEQ: {
+    Expr *right = parse_expr(p, a, PREC_RANGE);
+    return ast_expr_range(a, op, left, right, (op.ttype == TOKEN_DOTDOTEQ));
+  }
+
   default:
     fprintf(stderr, "error at %zu:%zu: unknown infix operator '%s'\n", op.line,
             op.column, op.token);
@@ -134,7 +141,7 @@ Expr *parse_name(Parser *p, Arena *a) {
     if (CURRENT(p).ttype == TOKEN_LBRACE) {
       return parse_struct_expr(p, a, tok);
     }
-    return ast_expr_ident(a, tok, arena_strdup(a, tok.token));
+    return ast_expr_ident(a, tok, tok.token);
   case TOKEN_UNDERSCORE:
     return ast_expr_ident(a, tok, "_");
   default:
@@ -180,8 +187,8 @@ Expr *parse_struct_expr(Parser *p, Arena *a, Token name_tok) {
 
   EXPECT(p, TOKEN_RBRACE, "expected '}' after struct literal");
 
-  return ast_expr_struct(a, name_tok, arena_strdup(a, name_tok.token),
-                         field_count, local_names, local_values);
+  return ast_expr_struct(a, name_tok, name_tok.token, field_count, local_names,
+                         local_values);
 }
 
 Expr *parse_grouped_expr(Parser *p, Arena *a) {
@@ -370,6 +377,9 @@ Precedence get_precedence(TType type) {
   case TOKEN_LBRACK:
   case TOKEN_QUESTION:
     return PREC_POSTFIX;
+  case TOKEN_DOTDOT:
+  case TOKEN_DOTDOTEQ:
+    return PREC_RANGE;
   case TOKEN_SEMI:
     return PREC_NONE;
   default:

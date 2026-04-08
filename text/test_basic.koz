@@ -1,3 +1,2 @@
-main() :: () -> int {
-    let p = Player { x = 1, y = 2 }
-}
+type PlayerId = int
+type Matrix = [[float]]

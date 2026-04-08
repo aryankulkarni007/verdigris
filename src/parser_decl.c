@@ -42,6 +42,8 @@ Decl *parse_impl_decl(Parser *p, Arena *a) {
   size_t method_count = 0;
   while (CURRENT(p).ttype != TOKEN_RBRACE && CURRENT(p).ttype != TOKEN_EOF) {
     Decl *method = parse_func_decl(p, a);
+    if (CURRENT(p).ttype == TOKEN_SEMI) //  deals with synthetic semi
+      ADVANCE(p);
     local_methods[method_count++] = method;
   }
 
@@ -64,7 +66,7 @@ Decl *parse_func_decl(Parser *p, Arena *a) {
             func_token.line, func_token.column, func_token.token);
     exit(1);
   }
-  char *func_name = arena_strdup(a, func_token.token);
+  char *func_name = func_token.token;
   ADVANCE(p);
 
   EXPECT(p, TOKEN_LPAREN, "expected '(' after function name");
@@ -176,7 +178,7 @@ Decl *parse_enum_decl(Parser *p, Arena *a) {
       EXPECT(p, TOKEN_RPAREN, "expected ')' after variant payload");
     }
 
-    local_variants[variant_count].name = variant_name.token;
+    local_variants[variant_count].name = arena_strdup(a, variant_name.token);
     local_variants[variant_count].payload = payload;
     variant_count++;
 
@@ -264,6 +266,25 @@ Decl *parse_struct_decl(Parser *p, Arena *a) {
   return ast_decl_struct(a, struct_token, name, fields, field_count);
 }
 
+Decl *parse_type_alias(Parser *p, Arena *a) {
+  Token type_tok = CURRENT(p);
+  ADVANCE(p); // consume 'type'
+
+  if (CURRENT(p).ttype != TOKEN_IDENT) {
+    fprintf(stderr, "error at %zu:%zu: expected type alias name, got '%s'\n",
+            CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);
+    exit(1);
+  }
+  Token name_tok = CURRENT(p);
+  ADVANCE(p);
+
+  EXPECT(p, TOKEN_ASSIGN, "expected '=' after type alias name");
+
+  Type *target = parse_type(p, a);
+
+  return ast_decl_type_alias(a, type_tok, name_tok.token, target);
+}
+
 Decl *parse_decl(Parser *p, Arena *a) {
   switch (CURRENT(p).ttype) {
   case TOKEN_STRUCT:
@@ -276,6 +297,8 @@ Decl *parse_decl(Parser *p, Arena *a) {
     return parse_extern_decl(p, a);
   case TOKEN_IDENT:
     return parse_func_decl(p, a);
+  case TOKEN_TYPE:
+    return parse_type_alias(p, a);
   default:
     fprintf(stderr, "error at %zu:%zu: unexpected token '%s' in declaration\n",
             CURRENT(p).line, CURRENT(p).column, CURRENT(p).token);

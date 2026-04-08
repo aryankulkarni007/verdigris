@@ -252,9 +252,9 @@ void ast_print_expr(Expr *e, int indent, bool *last_mask, bool is_last) {
 
   case E_ARRAY:
     printf("\n");
-    for (size_t i = 0; i < e->as.array_init.count; i++)
-      ast_print_expr(e->as.array_init.elements[i], indent + 1, last_mask,
-                     i == e->as.array_init.count - 1);
+    for (size_t i = 0; i < e->as._array.count; i++)
+      ast_print_expr(e->as._array.elements[i], indent + 1, last_mask,
+                     i == e->as._array.count - 1);
     break;
 
   case E_STRUCT:
@@ -446,6 +446,7 @@ void ast_print_decl(Decl *d, int indent, bool *last_mask, bool is_last) {
     ast_print_type(d->as.type_alias.target);
     printf("\n");
     break;
+
   default:
     printf("\n");
     break;

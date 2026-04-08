@@ -13,7 +13,7 @@ Type *ast_type_name(Arena *arena, Token token, char *name) {
   Type *node = arena_allocate(arena, sizeof(Type));
   node->kind = T_NAME;
   node->token = token;
-  node->as.name = name;
+  node->as.name = arena_strdup(arena, name);
   return node;
 }
 
@@ -45,7 +45,7 @@ Expr *ast_expr_string(Arena *arena, Token token, char *value) {
   Expr *node = arena_allocate(arena, sizeof(Expr));
   node->kind = E_STR_LIT;
   node->token = token;
-  node->as.str_val = value;
+  node->as.str_val = arena_strdup(arena, value);
   return node;
 }
 
@@ -76,7 +76,7 @@ Expr *ast_expr_ident(Arena *arena, Token token, char *name) {
   Expr *node = arena_allocate(arena, sizeof(Expr));
   node->kind = E_IDENT;
   node->token = token;
-  node->as.ident_name = name;
+  node->as.ident_name = arena_strdup(arena, name);
   return node;
 }
 
@@ -102,7 +102,7 @@ Expr *ast_expr_access(Arena *arena, Token op_token, Expr *left, Token ident) {
   node->kind = E_ACCESS;
   node->token = op_token;
   node->as.access.site = left;
-  node->as.access.name = ident.token;
+  node->as.access.name = arena_strdup(arena, ident.token);
   return node;
 }
 
@@ -175,8 +175,8 @@ Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t count) {
   Expr *node = arena_allocate(arena, sizeof(Expr));
   node->kind = E_ARRAY;
   node->token = token;
-  node->as.array_init.elements = elements;
-  node->as.array_init.count = count;
+  node->as._array.elements = elements;
+  node->as._array.count = count;
   return node;
 }
 
@@ -185,7 +185,7 @@ Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name,
   Expr *node = arena_allocate(arena, sizeof(Expr));
   node->kind = E_STRUCT;
   node->token = token;
-  node->as._struct.struct_name = struct_name;
+  node->as._struct.struct_name = arena_strdup(arena, struct_name);
   node->as._struct.field_count = field_count;
   node->as._struct.fields = NULL;
 
@@ -198,6 +198,17 @@ Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name,
     }
   }
 
+  return node;
+}
+
+Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end,
+                     bool is_inclusive) {
+  Expr *node = arena_allocate(arena, sizeof(Expr));
+  node->kind = E_RANGE;
+  node->token = token;
+  node->as.range.start = start;
+  node->as.range.end = end;
+  node->as.range.is_inclusive = is_inclusive;
   return node;
 }
 
@@ -273,8 +284,8 @@ Stmt *ast_stmt_op_assign(Arena *arena, Token op_token, Expr *target,
   Stmt *node = arena_allocate(arena, sizeof(Stmt));
   node->kind = S_OP_ASSIGN;
   node->token = op_token;
-  node->as.assign.target = target;
-  node->as.assign.value = value;
+  node->as.op_assign.target = target; // could have been a massive bug
+  node->as.op_assign.value = value;   //
   return node;
 }
 
@@ -305,7 +316,7 @@ Decl *ast_decl_func(Arena *arena, Token token, char *name, Param *params,
   Decl *node = arena_allocate(arena, sizeof(Decl));
   node->kind = D_FUNC;
   node->token = token;
-  node->as.function.name = name;
+  node->as.function.name = arena_strdup(arena, name);
   node->as.function.params = params;
   node->as.function.param_count = param_count;
   node->as.function.return_type = return_type;
@@ -318,7 +329,7 @@ Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
   Decl *node = arena_allocate(arena, sizeof(Decl));
   node->kind = D_ENUM;
   node->token = token;
-  node->as._enum.name = name;
+  node->as._enum.name = arena_strdup(arena, name);
   node->as._enum.variants = variants;
   node->as._enum.variant_count = variant_count;
   return node;
@@ -331,5 +342,15 @@ Decl *ast_decl_extern(Arena *arena, Token token, Decl **decls,
   node->token = token;
   node->as.extern_block.decls = decls;
   node->as.extern_block.count = decl_count;
+  return node;
+}
+
+Decl *ast_decl_type_alias(Arena *arena, Token token, char *alias_name,
+                          Type *target) {
+  Decl *node = arena_allocate(arena, sizeof(Decl));
+  node->kind = D_TYPE;
+  node->token = token;
+  node->as.type_alias.alias_name = arena_strdup(arena, alias_name);
+  node->as.type_alias.target = target;
   return node;
 }

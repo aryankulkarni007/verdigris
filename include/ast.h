@@ -206,7 +206,7 @@ struct Expr {
     struct {
       struct Expr **elements;
       size_t count;
-    } array_init;
+    } _array;
 
     struct {
       struct Expr *start;
@@ -345,9 +345,8 @@ Expr *ast_expr_array(Arena *arena, Token token, Expr **elements, size_t count);
 Expr *ast_expr_struct(Arena *arena, Token token, char *struct_name,
                       size_t field_count, char **names, Expr **values);
 
-// TODO: range builder
-// Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end, bool
-// is_inclusive);
+Expr *ast_expr_range(Arena *arena, Token token, Expr *start, Expr *end,
+                     bool is_inclusive);
 
 Expr *ast_expr_if(Arena *arena, Token token, Expr *condition, Stmt *then_expr,
                   Stmt *else_expr);
@@ -389,8 +388,7 @@ Decl *ast_decl_struct(Arena *arena, Token token, char *name, Field *fields,
 Decl *ast_decl_enum(Arena *arena, Token token, char *name, Variant *variants,
                     size_t variant_count);
 
-// TODO: type alias builder
-// Decl *ast_decl_type_alias(Arena *arena, Token token, char *alias_name, Type
-// *target);
+Decl *ast_decl_type_alias(Arena *arena, Token token, char *alias_name,
+                          Type *target);
 
 #endif // AST_H

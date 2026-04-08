@@ -209,7 +209,7 @@ Type *parse_type(Parser *p, Arena *a) {
 
   case TOKEN_IDENT:
     ADVANCE(p);
-    return ast_type_name(a, token, arena_strdup(a, token.token));
+    return ast_type_name(a, token, token.token);
 
   case TOKEN_LBRACK:
     // Array type [T]
