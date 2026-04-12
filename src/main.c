@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../include/arena.h"
+
 #define ERROR(x)                                                               \
   fprintf(stderr, "%s\n", x);                                                  \
   return (Source) { .file_size = 0, .buffer = NULL }
