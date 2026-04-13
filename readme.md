@@ -1,171 +1,61 @@
-# rime programming language
+# agenda
 
-- (X) file handling
-- ( ) lexer
-  - (X) base
-  - ( ) extended
-- ( ) parser + ast
-- ( ) error handler
-- ( ) type checker
-- ( ) your own IR
-- ( ) llvm backend
-- ( ) multi-file support
-- ( ) treesitter grammar
-- ( ) lsp
-- ( ) build tool
+## Phase 0: Foundation (Current)
 
-# Rime — Language Design Notes (Early Draft)
+Goal: Rock-solid infrastructure before parsing
 
-rime is a systems-oriented language focused on zero-cost abstractions, deterministic behavior, and high performance, while avoiding explicit memory management in user code. The language is being built from first principles with an emphasis on clarity, composability, and aesthetic syntax.
+- (X) Arena allocator
+- (~) String interning (in progress - see evaluation below)
+- ( ) Vec macros (dynamic arrays for token streams, CST children)
+- ( ) Source spans (line/col tracking from lexer)
+- ( ) Diagnostic system (error/warning collection and printing)
+- ( ) Symbol table scaffold (scope management, name->declaration mapping)
 
----
+## Phase 1: CST Construction
 
-## Compilation Model
+Goal: Parse source into concrete syntax tree preserving all trivia
 
-Rime is designed as a compiled language. Although early iterations may target C as a backend, the long-term goal is a self-contained compiler to avoid inheriting constraints from C’s design.
+- ( ) CST node definitions - One struct per syntactic category
+- ( ) CST parser - Recursive descent over token stream
+- ( ) CST pretty printer - Verify round-trip fidelity
 
----
+## Phase 2: AST Lowering
 
-## Frontend Architecture
+Goal: Desugar CST to semantic AST
 
-The frontend is structured in three distinct stages:
+- ( ) AST node definitions - Semantic structure, no syntax noise
+- ( ) Lowering passes - Pipeline >>, ! propagation, pattern desugaring
+- ( ) AST printer - Debug representation
 
-```
-source → tokens → CST → AST
-```
+## Phase 3: Name Resolution
 
-### Lexer
+Goal: Connect every identifier to its declaration
 
-The lexer performs a single pass over the source file (loaded entirely into memory) and produces a sequence of tokens.
+- ( ) Symbol table with scopes - Block scoping, function parameters
+- ( ) Import/module resolution - Basic single-file first
+- ( ) Error reporting - "undefined variable 'x'"
 
-Each token consists of:
+## Phase 4: Type Checking
 
-- a `TokenKind`
-- a `Span` (`start`, `end` byte offsets)
+Goal: Validate and infer types
 
-Spans are byte-based and do not store line/column information directly. Line mappings are maintained separately for diagnostics.
+- ( ) Type representation - Primitives, structs, enums, generics
+- ( ) Unification - Hindley-Milner style inference
+- ( ) Interface checking - Structural satisfaction
+- ( ) Pattern exhaustiveness - All cases covered
 
----
+## Phase 5: HIR Lowering
 
-### Lossless Token Stream
+Goal: Fully resolved intermediate representation
 
-The lexer preserves all source information through a **lossless token model**.
+- ( ) Monomorphization - Expand generic instantiations
+- ( ) Pattern lowering - Decision trees
+- ( ) Pool operations explicit - Allocations visible
 
-- Whitespace and comments are not emitted as regular tokens
-- Instead, they are captured as **trivia**
-- Trivia is attached to tokens (typically as leading trivia)
+## Phase 6: C Codegen
 
-This allows:
+Goal: Emit debuggable C
 
-- exact reconstruction of source code
-- high-quality diagnostics
-- future tooling such as formatters
-
----
-
-### Token Design
-
-Token kinds represent **syntax**, not semantics.
-
-Included:
-
-- identifiers (`IDENT`)
-- literals (`INT`, `FLOAT`, `STRING`, `TRUE`, `FALSE`)
-- keywords (`fn`, `if`, `match`, etc.)
-- operators and delimiters (`+`, `=`, `(`, `{`, etc.)
-
-Not included:
-
-- type names such as `int`, `bool`, `Point`
-
-All type names lex as `IDENT`. Their meaning is resolved later during semantic analysis.
-
----
-
-### Trivia
-
-Trivia represents non-semantic source elements:
-
-- whitespace
-- newlines
-- comments (line, block, documentation)
-
-Trivia is stored separately from tokens but attached to them, preserving full source fidelity without complicating parsing.
-
----
-
-### Parsing Strategy (CST)
-
-The parser constructs a **Concrete Syntax Tree (CST)**.
-
-Key properties:
-
-- lossless representation of syntax
-- preserves all tokens and structure
-- supports invalid or incomplete code
-
-The parser is designed to be **error-tolerant**:
-
-- missing tokens are inserted into the tree when expected
-- parsing continues rather than aborting
-- errors are recorded but do not halt construction
-
-This avoids heavy reliance on synchronization points and enables better diagnostics.
-
----
-
-### AST Lowering
-
-The CST is later lowered into a more compact and semantic AST.
-
-- redundant syntax is removed
-- structure is normalized
-- semantic analysis operates on this layer
-
----
-
-## Type System Direction
-
-Types are treated as identifiers at the lexical level.
-
-This allows:
-
-- uniform handling of built-in and user-defined types
-- simpler and more extensible syntax
-- delayed semantic resolution
-
-Example:
-
-```
-int x;
-Point y;
-```
-
-Both `int` and `Point` are lexed as `IDENT`.
-
----
-
-## Core Infrastructure
-
-The compiler is being built alongside a small foundational library, including:
-
-- a resizable vector (dynamic array)
-- an aligned arena allocator
-- span and source mapping utilities
-- token and trivia representations
-- a diagnostic system
-
-This library is intended to remain minimal but robust, forming the backbone of all later stages.
-
----
-
-## Design Philosophy
-
-Rime aims to:
-
-- preserve information as long as possible (lossless stages)
-- separate syntax from semantics cleanly
-- favor explicit structure over implicit behavior
-- enable strong tooling and diagnostics from the outset
-
-The language is being developed iteratively, with correctness and architectural clarity prioritized over rapid feature expansion.
+- ( ) Type translation - Verdigris types → C types
+- ( ) Runtime library - libverdi with pools, vec, string
+- ( ) C emitter - Pretty-printed C with #line directives

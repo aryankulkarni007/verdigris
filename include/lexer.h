@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include "arena.h"
+#include "intern.h"
 #include "main.h"
 #include "token.h"
 #include <stdbool.h>
@@ -18,7 +19,16 @@ struct Lexer {
   Arena *token_arena;
   Arena *trivia_arena;
   Arena *string_arena;
+  InternTable *intern;
 };
+
+typedef struct {
+  Token *data;
+  size_t len;
+  size_t cap;
+} TStream;
+
+TStream lex(Lexer *l);
 
 /// returns current char
 static inline char current(Lexer *l) {
@@ -58,8 +68,7 @@ static inline bool check(Lexer *l, char c) {
   return current(l) == c;
 }
 
-void new_lexer(Lexer *l, Arena *token_arena, Arena *string_arena,
-               Arena *trivia_arena, const Source *src);
-Token *lex(Lexer *l);
+void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,
+                Arena *trivia_arena, const Source *src, InternTable *table);
 
 #endif // LEXER_H

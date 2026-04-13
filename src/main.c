@@ -1,13 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../include/arena.h"
 #include "../include/lexer.h"
 #include "../include/main.h"
+#include "../include/vector.h"
 
 #define ERROR(x)                                                               \
   fprintf(stderr, "%s\n", x);                                                  \
   return (Source) { .file_size = 0, .buffer = NULL }
+
+void print_version() {
+  printf("Verdigris Compiler v0.1.0\n");
+  return;
+}
 
 void print_usage(char *exec) {
   fprintf(stderr, "usage: %s <file>\n", exec);
@@ -38,6 +45,7 @@ Source handle_file(char *path) {
   }
 
   buffer[file_size] = '\0';
+  fclose(file);
   return (Source){.file_size = file_size, .buffer = buffer};
 }
 
@@ -45,6 +53,11 @@ int main(int argc, char *argv[]) {
   if (argc < 2) {
     print_usage(argv[0]);
     return 1;
+  }
+
+  if (strcmp(argv[1], "-v") == 0) {
+    print_version();
+    return 0;
   }
 
   Source src = handle_file(argv[1]);
@@ -55,12 +68,19 @@ int main(int argc, char *argv[]) {
   Arena string_arena = arena_init(1LL << 30);
 
   Lexer lexer;
-  new_lexer(&lexer, &token_arena, &string_arena, &trivia_arena, &src);
-  Token *stream = lex(&lexer);
+  InternTable table = intern_init(&string_arena);
+  lexer_init(&lexer, &token_arena, &string_arena, &trivia_arena, &src, &table);
+  TStream stream = lex(&lexer);
 
-  size_t t_count = 0;
-  for (t_count = 0; stream[t_count].type != TK_EOF; ++t_count) {
-    print_token(&stream[t_count], src.buffer);
-  }
+  // for debugging the string hashmap
+  // intern_dump(&table);
+
+  // super cool macro
+  vec_for_each_struct(stream, t) { print_token(t, src.buffer); }
+
+  arena_destroy(&token_arena);
+  arena_destroy(&trivia_arena);
+  arena_destroy(&string_arena);
+  free(src.buffer);
   return 0;
 }

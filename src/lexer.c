@@ -1,6 +1,8 @@
 #include "../include/lexer.h"
+#include "../include/intern.h"
 #include "../include/token.h"
 #include "../include/trivia.h"
+#include "../include/vector.h"
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -20,8 +22,8 @@ static const TK_T char_tk[256] = {
     // all other indices default to 0 (TK_ILLEGAL)
 };
 
-void new_lexer(Lexer *l, Arena *token_arena, Arena *string_arena,
-               Arena *trivia_arena, const Source *src) {
+void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,
+                Arena *trivia_arena, const Source *src, InternTable *table) {
   l->src = src->buffer;
   l->len = src->file_size;
   l->pos = 0;
@@ -30,6 +32,7 @@ void new_lexer(Lexer *l, Arena *token_arena, Arena *string_arena,
   l->token_arena = token_arena;
   l->trivia_arena = trivia_arena;
   l->string_arena = string_arena;
+  l->intern = table;
 }
 
 static Token lex_ident(Lexer *l, Trivia *leading, size_t leading_count) {
@@ -38,13 +41,14 @@ static Token lex_ident(Lexer *l, Trivia *leading, size_t leading_count) {
   while (isalnum(current(l)) || current(l) == '_')
     advance(l);
 
-  return (Token){
-      .span = {.start = start, .end = l->pos},
-      .type = TK_IDENT,
-      .line = line,
-      .leading = leading,
-      .leading_count = leading_count,
-  };
+  size_t len = l->pos - start;
+  InternID id = intern_string(l->intern, l->src + start, len);
+  return (Token){.span = {.start = start, .end = l->pos},
+                 .type = TK_IDENT,
+                 .line = line,
+                 .leading = leading,
+                 .leading_count = leading_count,
+                 .id = id};
 }
 
 static Token lex_num(Lexer *l, Trivia *leading, size_t leading_count) {
@@ -75,23 +79,28 @@ static Token lex_string(Lexer *l, Trivia *leading, size_t leading_count) {
   advance(l); // '"'
   size_t start = l->pos;
   size_t line = l->line;
-  size_t end = 0;
   while (current(l) != '"' && current(l) != '\0') {
     if (current(l) == '\\' && peek(l) == '"') {
-      advance(l); // '\'
-      advance(l); // '"'
+      advance(l);
+      advance(l);
       continue;
     }
     advance(l);
-    end = l->pos;
   }
-  advance(l); // '"'
+  size_t end = l->pos;
+  if (current(l) == '"') {
+    advance(l); // closing quote
+  }
+
+  size_t len = end - start;
+  InternID id = intern_string(l->intern, l->src + start, len);
   return (Token){
       .span = {.start = start, .end = end},
       .type = TK_STRING,
       .line = line,
       .leading = leading,
       .leading_count = leading_count,
+      .id = id,
   };
 }
 
@@ -226,14 +235,14 @@ Token next_token(Lexer *l) {
 }
 
 /// entry point into the lexer
-Token *lex(Lexer *l) {
-  Token *base = NULL;
-  Token *t;
+TStream lex(Lexer *l) {
+  TStream stream = {0};
+
+  Token t;
   do {
-    t = arena_alloc(l->token_arena, sizeof(Token));
-    if (!base)
-      base = t;
-    *t = next_token(l);
-  } while (t->type != TK_EOF);
-  return base;
+    t = next_token(l);
+    vec_push_struct(l->token_arena, stream, t);
+  } while (t.type != TK_EOF);
+
+  return stream;
 }

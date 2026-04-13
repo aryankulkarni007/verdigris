@@ -1,6 +1,7 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
+#include "intern.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -86,6 +87,7 @@ struct Token {
 
   struct Trivia *leading;
   size_t leading_count;
+  InternID id;
 };
 
 void print_token(Token *t, const char *source_buffer);
