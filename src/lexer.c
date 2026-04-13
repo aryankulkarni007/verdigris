@@ -8,17 +8,17 @@
 #include <stdbool.h>
 #include <string.h>
 
-/* TODO: check before commit */
-
 #define MAX_TRIVIA 64
 
 static const TK_T char_tk[256] = {
-    ['+'] = TK_PLUS,   ['-'] = TK_MINUS,  ['*'] = TK_STAR,   ['/'] = TK_SLASH,
-    ['('] = TK_OPAREN, [')'] = TK_CPAREN, ['{'] = TK_OBRACE, ['}'] = TK_CBRACE,
-    ['['] = TK_OBRACK, [']'] = TK_CBRACK, [';'] = TK_SEMI,   [','] = TK_COMMA,
-    ['.'] = TK_DOT,    [':'] = TK_COL,    ['='] = TK_ASSIGN, ['<'] = TK_LT,
-    ['>'] = TK_GT,     ['!'] = TK_BANG,   ['&'] = TK_AMP,    ['|'] = TK_PIPE,
-    ['%'] = TK_MODULO
+    ['+'] = TK_PLUS,   ['-'] = TK_MINUS,    ['*'] = TK_STAR,
+    ['/'] = TK_SLASH,  ['('] = TK_OPAREN,   [')'] = TK_CPAREN,
+    ['{'] = TK_OBRACE, ['}'] = TK_CBRACE,   ['['] = TK_OBRACK,
+    [']'] = TK_CBRACK, [';'] = TK_SEMI,     [','] = TK_COMMA,
+    ['.'] = TK_DOT,    [':'] = TK_COL,      ['='] = TK_ASSIGN,
+    ['<'] = TK_LT,     ['>'] = TK_GT,       ['!'] = TK_BANG,
+    ['&'] = TK_AMP,    ['|'] = TK_PIPE,     ['%'] = TK_MODULO,
+    ['@'] = TK_AT,     ['?'] = TK_QUESTION,
     // all other indices default to 0 (TK_ILLEGAL)
 };
 
@@ -35,7 +35,7 @@ void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,
   l->intern = table;
 }
 
-static Token lex_ident(Lexer *l, Trivia *leading, size_t leading_count) {
+static Token lex_ident(Lexer *l) {
   size_t start = l->pos;
   size_t line = l->line;
   while (isalnum(current(l)) || current(l) == '_')
@@ -46,12 +46,10 @@ static Token lex_ident(Lexer *l, Trivia *leading, size_t leading_count) {
   return (Token){.span = {.start = start, .end = l->pos},
                  .type = TK_IDENT,
                  .line = line,
-                 .leading = leading,
-                 .leading_count = leading_count,
                  .id = id};
 }
 
-static Token lex_num(Lexer *l, Trivia *leading, size_t leading_count) {
+static Token lex_num(Lexer *l) {
   size_t start = l->pos;
   size_t line = l->line;
   bool is_float = false;
@@ -70,12 +68,10 @@ static Token lex_num(Lexer *l, Trivia *leading, size_t leading_count) {
       .span = {.start = start, .end = l->pos},
       .type = is_float ? TK_FLOAT : TK_INT,
       .line = line,
-      .leading = leading,
-      .leading_count = leading_count,
   };
 }
 
-static Token lex_string(Lexer *l, Trivia *leading, size_t leading_count) {
+static Token lex_string(Lexer *l) {
   advance(l); // '"'
   size_t start = l->pos;
   size_t line = l->line;
@@ -98,8 +94,6 @@ static Token lex_string(Lexer *l, Trivia *leading, size_t leading_count) {
       .span = {.start = start, .end = end},
       .type = TK_STRING,
       .line = line,
-      .leading = leading,
-      .leading_count = leading_count,
       .id = id,
   };
 }
@@ -117,14 +111,14 @@ Token lex_single(Lexer *l, char tk, Trivia *leading, size_t leading_count) {
   };
 }
 
-Token lex_double(Lexer *l, TK_T type, Trivia *leading, size_t leading_count) {
+Token lex_double(Lexer *l, TK_T type) {
   size_t line = l->line;
   Span span = {0};
   span.start = l->pos;
   advance(l);
   advance(l); // '='
   span.end = l->pos;
-  return new_token(span, type, line, leading, leading_count);
+  return new_token(span, type, line);
 }
 
 static void attach_trivia_to_token(Token *t, Lexer *l, Trivia *source,
@@ -170,11 +164,11 @@ Token next_token(Lexer *l) {
 
   // big
   if (isdigit(current(l))) {
-    t = lex_num(l, leading, leading_count);
+    t = lex_num(l);
   } else if (isalnum(current(l)) || current(l) == '_') {
-    t = lex_ident(l, leading, leading_count);
+    t = lex_ident(l);
   } else if (current(l) == '"') {
-    t = lex_string(l, leading, leading_count);
+    t = lex_string(l);
   } else if (current(l) == '\0') {
     t = (Token){
         .span = {.start = l->pos, .end = l->pos},
@@ -189,33 +183,7 @@ Token next_token(Lexer *l) {
     char n = peek(l);
     char nn = peek_next(l);
 
-    if (c == '+' && n == '=')
-      t = lex_double(l, TK_PLUSEQ, leading, leading_count);
-    else if (c == '-' && n == '=')
-      t = lex_double(l, TK_MINUSEQ, leading, leading_count);
-    else if (c == '*' && n == '=')
-      t = lex_double(l, TK_STAREQ, leading, leading_count);
-    else if (c == '/' && n == '=')
-      t = lex_double(l, TK_SLASHEQ, leading, leading_count);
-    else if (c == '%' && n == '=')
-      t = lex_double(l, TK_MODULOEQ, leading, leading_count);
-    else if (c == '<' && n == '=')
-      t = lex_double(l, TK_LTEQ, leading, leading_count);
-    else if (c == '>' && n == '=')
-      t = lex_double(l, TK_GTEQ, leading, leading_count);
-    else if (c == '!' && n == '=')
-      t = lex_double(l, TK_NEQ, leading, leading_count);
-    else if (c == '=' && n == '=')
-      t = lex_double(l, TK_EQ, leading, leading_count);
-    else if (c == '-' && n == '>')
-      t = lex_double(l, TK_ARROW, leading, leading_count);
-    else if (c == '=' && n == '>')
-      t = lex_double(l, TK_FATARROW, leading, leading_count);
-    else if (c == '.' && n == '.')
-      t = lex_double(l, TK_DDOT, leading, leading_count);
-    else if (c == ':' && n == ':')
-      t = lex_double(l, TK_CCOL, leading, leading_count);
-    else if (c == '.' && n == '.' && nn == '=') {
+    if (c == '.' && n == '.' && nn == '=') {
       size_t line = l->line;
       Span span = {0};
       span.start = l->pos;
@@ -223,9 +191,41 @@ Token next_token(Lexer *l) {
       advance(l);
       advance(l);
       span.end = l->pos;
-      t = new_token(span, TK_DDOTEQ, line, leading, leading_count);
-    } else {
-      // single char tokens
+      t = new_token(span, TK_DDOTEQ, line);
+    } else if (c == '&' && n == '&')
+      t = lex_double(l, TK_AND);
+    else if (c == '|' && n == '|')
+      t = lex_double(l, TK_OR);
+    else if (c == '+' && n == '=')
+      t = lex_double(l, TK_PLUSEQ);
+    else if (c == '-' && n == '=')
+      t = lex_double(l, TK_MINUSEQ);
+    else if (c == '*' && n == '=')
+      t = lex_double(l, TK_STAREQ);
+    else if (c == '/' && n == '=')
+      t = lex_double(l, TK_SLASHEQ);
+    else if (c == '%' && n == '=')
+      t = lex_double(l, TK_MODULOEQ);
+    else if (c == '<' && n == '=')
+      t = lex_double(l, TK_LTEQ);
+    else if (c == '>' && n == '=')
+      t = lex_double(l, TK_GTEQ);
+    else if (c == '>' && n == '>')
+      t = lex_double(l, TK_PIPELINE);
+    else if (c == '!' && n == '=')
+      t = lex_double(l, TK_NEQ);
+    else if (c == '=' && n == '=')
+      t = lex_double(l, TK_EQ);
+    else if (c == '-' && n == '>')
+      t = lex_double(l, TK_ARROW);
+    else if (c == '=' && n == '>')
+      t = lex_double(l, TK_FATARROW);
+    else if (c == '.' && n == '.')
+      t = lex_double(l, TK_DDOT);
+    else if (c == ':' && n == ':')
+      t = lex_double(l, TK_CCOL);
+    else {
+      // single
       t = lex_single(l, current(l), leading, leading_count);
     }
   }

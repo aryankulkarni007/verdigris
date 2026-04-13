@@ -1,0 +1,18 @@
+[
+  {
+    "file": "src/main.c",
+    "arguments": [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "-Iinclude",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-c",
+      "src/main.c",
+      "-o",
+      "obj/main.o"
+    ],
+    "directory": "/Users/aryankulkarni/dev/compiler/verdigris",
+    "output": "obj/main.o"
+  }
+]

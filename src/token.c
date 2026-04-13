@@ -49,11 +49,10 @@ void print_token(Token *t, const char *source_buffer) {
          tk_name(t->type), (int)length, lexeme, t->span.start, t->span.end);
 }
 
-Token new_token(Span span, TK_T type, uint32_t line, struct Trivia *leading,
-                size_t leading_count) {
-  return (Token){.span = span,
-                 .type = type,
-                 .line = line,
-                 .leading = leading,
-                 .leading_count = leading_count};
+Token new_token(Span span, TK_T type, uint32_t line) {
+  return (Token){
+      .span = span,
+      .type = type,
+      .line = line,
+  };
 }
