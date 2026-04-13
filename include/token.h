@@ -2,13 +2,14 @@
 #define TOKEN_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct Span Span;
 typedef struct Token Token;
 
 #define TOKEN_T(X)                                                             \
-  X(TK_EOF)                                                                    \
   X(TK_ILLEGAL)                                                                \
+  X(TK_EOF)                                                                    \
   X(TK_AS)                                                                     \
   X(TK_IDENT)                                                                  \
   X(TK_INT)                                                                    \
@@ -41,10 +42,12 @@ typedef struct Token Token;
   X(TK_MINUS)                                                                  \
   X(TK_STAR)                                                                   \
   X(TK_SLASH)                                                                  \
+  X(TK_MODULO)                                                                 \
   X(TK_PLUSEQ)                                                                 \
   X(TK_MINUSEQ)                                                                \
   X(TK_STAREQ)                                                                 \
   X(TK_SLASHEQ)                                                                \
+  X(TK_MODULOEQ)                                                               \
   X(TK_OPAREN)                                                                 \
   X(TK_CPAREN)                                                                 \
   X(TK_OBRACE)                                                                 \
@@ -59,29 +62,17 @@ typedef struct Token Token;
   X(TK_FATARROW)                                                               \
   X(TK_DOT)                                                                    \
   X(TK_DDOT)                                                                   \
+  X(TK_DDOTEQ)                                                                 \
   X(TK_UND)                                                                    \
   X(TK_COMMA)                                                                  \
+  X(TK_PIPE)                                                                   \
   X(TK_BANG)
-
-#define TRIVIA_T(X)                                                            \
-  X(TV_WSPACE)                                                                 \
-  X(TV_NEWLINE)                                                                \
-  X(TV_TAB)                                                                    \
-  X(TV_COMMENT)                                                                \
-  X(TV_DOCC)                                                                   \
-  X(TV_BLOCKC)
 
 typedef enum {
 #define AS_ENUM(name) name,
   TOKEN_T(AS_ENUM)
 #undef AS_ENUM
 } TK_T;
-
-typedef enum {
-#define AS_ENUM(name) name,
-  TRIVIA_T(AS_ENUM)
-#undef AS_ENUM
-} TV_T;
 
 struct Span {
   size_t start;
@@ -91,14 +82,14 @@ struct Span {
 struct Token {
   Span span;
   TK_T type;
+  uint32_t line; // for error reporting
 
   struct Trivia *leading;
   size_t leading_count;
 };
 
-struct Trivia {
-  Span span;
-  TV_T type;
-};
+void print_token(Token *t, const char *source_buffer);
+Token new_token(Span span, TK_T type, uint32_t line, struct Trivia *leading,
+                size_t leading_count);
 
 #endif // TOKEN_H

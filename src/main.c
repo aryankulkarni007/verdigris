@@ -2,6 +2,8 @@
 #include <stdlib.h>
 
 #include "../include/arena.h"
+#include "../include/lexer.h"
+#include "../include/main.h"
 
 #define ERROR(x)                                                               \
   fprintf(stderr, "%s\n", x);                                                  \
@@ -11,11 +13,6 @@ void print_usage(char *exec) {
   fprintf(stderr, "usage: %s <file>\n", exec);
   return;
 }
-
-typedef struct {
-  size_t file_size;
-  char *buffer;
-} Source;
 
 Source handle_file(char *path) {
   FILE *file = fopen(path, "rb");
@@ -51,6 +48,19 @@ int main(int argc, char *argv[]) {
   }
 
   Source src = handle_file(argv[1]);
-  printf("%s", src.buffer);
+  // printf("%s", src.buffer);
+
+  Arena token_arena = arena_init(1LL << 30);
+  Arena trivia_arena = arena_init(1LL << 30);
+  Arena string_arena = arena_init(1LL << 30);
+
+  Lexer lexer;
+  new_lexer(&lexer, &token_arena, &string_arena, &trivia_arena, &src);
+  Token *stream = lex(&lexer);
+
+  size_t t_count = 0;
+  for (t_count = 0; stream[t_count].type != TK_EOF; ++t_count) {
+    print_token(&stream[t_count], src.buffer);
+  }
   return 0;
 }

@@ -8,7 +8,7 @@
 typedef struct {
   unsigned char *base; // start of 1GB reservation
   size_t reserved;     // total size
-  size_t committed;     // active ram
+  size_t committed;    // active ram
   size_t used;         // the 'bump' pointer offset
 } Arena;
 
