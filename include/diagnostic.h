@@ -45,7 +45,7 @@ bool diag_ok(DiagBag *bag);
 // DiagBag diags = diag_init(&arena);
 
 // if (!match(parser, TK_SEMI)) {
-//   SourceSpan span = span_from_token(file_path, current_token);
+//   SourceSpan span = span_from_token(file_path, l_current_token);
 //   diag_error(&diags, span, "E0001", "expected ';' after statement");
 //   diag_help(&diags, "try adding a semicolon at the end of the line");
 // }

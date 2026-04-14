@@ -40,13 +40,13 @@ Removing any feature should break the ability to express common patterns cleanly
 **Purpose:** Ownership and lifetime management
 **Why:** The fundamental answer to "where does this live and how long?"
 **Expression:** Arenas, generational handles, scoped allocation
-**Replaces:** malloc/free, GC, Rust's borrow checker complexity
+**Replaces:** malloc/free, GC, Rust's borrow l_checker complexity
 
 ### 2. Patterns
 
 **Purpose:** Destructuring and branching
 **Why:** The fundamental answer to "what shape is this data and what do I do with it?"
-**Expression:** Match expressions, exhaustive checking, binding
+**Expression:** Match expressions, exhaustive l_checking, binding
 **Replaces:** if/else chains, switch statements, manual destructuring
 
 ### 3. Pipelines
@@ -86,7 +86,7 @@ Multiple IR passes, each translating the dialect closer to machine code:
 Generational arenas with handles:
 
 - Pools own memory (single ownership)
-- Handles are validated on access (generation check)
+- Handles are validated on access (generation l_check)
 - No lifetimes in type signatures
 - Deterministic cleanup at scope boundaries
 - Debug builds validate; release builds can opt into `@unsafe` blocks
@@ -97,7 +97,7 @@ Not "prove absence of bugs." Rather:
 
 - Make unsafe code visually offensive (`@unsafe` blocks)
 - Make safe code elegant and frictionless
-- Runtime checks where needed, removable where proven
+- Runtime l_checks where needed, removable where proven
 - The compiler is a collaborator, not an adversary
 
 ## The Aesthetic Stance

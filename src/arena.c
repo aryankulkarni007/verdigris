@@ -22,7 +22,7 @@ Arena arena_init(size_t reserve_size) {
 void *arena_alloc(Arena *a, size_t size) {
   size = (size + 7) & ~7;
 
-  // check if we need more ram
+  // l_check if we need more ram
   if (a->used + size > a->committed) {
     size_t page_size = 64 * 1024;
     size_t needed = a->used + size - a->committed;

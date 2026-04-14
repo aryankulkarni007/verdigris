@@ -471,7 +471,7 @@ for i in 0..10 {
 let x: float = 3.14;
 let y = x as int;  -- 3
 
--- Interface casting (runtime checked)
+-- Interface casting (runtime l_checked)
 let printable = value as Printable;
 match printable {
     Some(p) => print(p.format()),

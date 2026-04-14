@@ -22,7 +22,7 @@ typedef struct Span Span;
   X(TK_TRUE)   /* boolean true  (lexed as ident, reserved for later)   */      \
   X(TK_FALSE)  /* boolean false (lexed as ident, reserved for later)   */      \
   /* ── keywords ───────────────────────────────────────────────────────── */  \
-  /* NOTE: all keywords are currently lexed as TK_IDENT and distinguished  */  \
+  /* NOTE: all keywords are l_currently lexed as TK_IDENT and distinguished  */  \
   /* by the parser via intern pointer comparison. these entries are kept    */ \
   /* here as documentation and for future use if keyword lexing is added.  */  \
   X(TK_AS)        /* as    — type cast: x as float                        */   \

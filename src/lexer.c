@@ -56,8 +56,8 @@ static Token lex_ident(Lexer *l) {
   size_t start = l->pos;
   size_t line = l->line;
   size_t line_start = l->line_start_pos;
-  while (isalnum(current(l)) || current(l) == '_')
-    advance(l);
+  while (isalnum(l_current(l)) || l_current(l) == '_')
+    l_advance(l);
 
   size_t len = l->pos - start;
   InternID id = intern_string(l->intern, l->src + start, len);
@@ -73,15 +73,15 @@ static Token lex_num(Lexer *l) {
   size_t line = l->line;
   size_t line_start = l->line_start_pos;
   bool is_float = false;
-  while (isdigit(current(l)) || current(l) == '.') {
-    if (current(l) == '.') {
-      if (peek(l) == '.')
-        break; // check for range operator
+  while (isdigit(l_current(l)) || l_current(l) == '.') {
+    if (l_current(l) == '.') {
+      if (l_peek(l) == '.')
+        break; // l_check for range operator
       if (is_float)
         break; // second dot
       is_float = true;
     }
-    advance(l);
+    l_advance(l);
   }
 
   return (Token){
@@ -93,20 +93,20 @@ static Token lex_num(Lexer *l) {
 }
 
 static Token lex_string(Lexer *l) {
-  advance(l); // '"'
+  l_advance(l); // '"'
   size_t start = l->pos;
   size_t line = l->line;
   size_t line_start = l->line_start_pos;
-  while (current(l) != '"' && current(l) != '\0') {
-    if (current(l) == '\\' && peek(l) == '"') {
-      advance(l);
-      advance(l);
+  while (l_current(l) != '"' && l_current(l) != '\0') {
+    if (l_current(l) == '\\' && l_peek(l) == '"') {
+      l_advance(l);
+      l_advance(l);
       continue;
     }
-    advance(l);
+    l_advance(l);
   }
 
-  if (current(l) == '\0') {
+  if (l_current(l) == '\0') {
     return (Token){
         .span = {.start = start - 1, .end = l->pos}, // include opening quote
         .type = TK_ILLEGAL,
@@ -115,7 +115,7 @@ static Token lex_string(Lexer *l) {
   }
 
   size_t end = l->pos;
-  advance(l); // closing quote
+  l_advance(l); // closing quote
   size_t len = end - start;
 
   InternID id = intern_string(l->intern, l->src + start, len);
@@ -132,7 +132,7 @@ Token lex_single(Lexer *l, char tk) {
   size_t start = l->pos;
   size_t line = l->line;
   size_t line_start = l->line_start_pos;
-  advance(l);
+  l_advance(l);
 
   TK_T type = char_tk[(unsigned char)tk];
   return (Token){
@@ -148,8 +148,8 @@ Token lex_double(Lexer *l, TK_T type) {
   size_t line_start = l->line_start_pos;
   Span span = {0};
   span.start = l->pos;
-  advance(l);
-  advance(l); // '='
+  l_advance(l);
+  l_advance(l); // '='
   span.end = l->pos;
   return new_token(span, type, line, line_start);
 }
@@ -177,23 +177,23 @@ Token next_token(Lexer *l) {
 
   // collect trivia
   while (true) {
-    char c = current(l);
+    char c = l_current(l);
     if (c == ' ')
       append_trivia(l, lex_wspace, leading, &leading_count);
     else if (c == '\n')
       append_trivia(l, lex_nline, leading, &leading_count);
     else if (c == '\t')
       append_trivia(l, lex_tab, leading, &leading_count);
-    else if (c == '-' && peek(l) == '-' && peek_next(l) == '-')
+    else if (c == '-' && l_peek(l) == '-' && l_peek_next(l) == '-')
       append_trivia(l, lex_docc, leading, &leading_count);
-    else if (c == '-' && peek(l) == '*') {
+    else if (c == '-' && l_peek(l) == '*') {
       size_t start = l->pos;
-      advance(l); // '-'
-      advance(l); // '*'
-      while (current(l) != '\0' && !(current(l) == '*' && peek(l) == '-'))
-        advance(l);
+      l_advance(l); // '-'
+      l_advance(l); // '*'
+      while (l_current(l) != '\0' && !(l_current(l) == '*' && l_peek(l) == '-'))
+        l_advance(l);
 
-      if (current(l) == '\0') {
+      if (l_current(l) == '\0') {
         // unterminated blockc
         Token t = (Token){
             .span = {.start = start, .end = l->pos},
@@ -204,8 +204,8 @@ Token next_token(Lexer *l) {
         attach_trivia_to_token(&t, l, leading, leading_count);
         return t;
       }
-      advance(l); // '*'
-      advance(l); // '-'
+      l_advance(l); // '*'
+      l_advance(l); // '-'
       Trivia trivia = {
           .span = {.start = start, .end = l->pos},
           .type = TV_BLOCKC,
@@ -213,41 +213,41 @@ Token next_token(Lexer *l) {
 
       append_trivia_single(leading, &leading_count, trivia);
       continue;
-    } else if (c == '-' && peek(l) == '-')
+    } else if (c == '-' && l_peek(l) == '-')
       append_trivia(l, lex_comment, leading, &leading_count);
     else
       break;
   }
 
   // big
-  if (isdigit(current(l)) || (current(l) == '.' && isdigit(peek(l)))) {
+  if (isdigit(l_current(l)) || (l_current(l) == '.' && isdigit(l_peek(l)))) {
     t = lex_num(l);
-  } else if (current(l) == '_' && !isalnum(peek(l))) {
+  } else if (l_current(l) == '_' && !isalnum(l_peek(l))) {
     // Standalone underscore
     t = lex_single(l, '_');
-  } else if (isalnum(current(l)) || current(l) == '_') {
+  } else if (isalnum(l_current(l)) || l_current(l) == '_') {
     t = lex_ident(l);
-  } else if (current(l) == '"') {
+  } else if (l_current(l) == '"') {
     t = lex_string(l);
-  } else if (current(l) == '\0') {
+  } else if (l_current(l) == '\0') {
     t = (Token){.span = {.start = l->pos, .end = l->pos},
                 .type = TK_EOF,
                 .line = l->line,
                 .line_start_pos = l->line_start_pos};
   } else {
     // double and triple
-    char c = current(l);
-    char n = peek(l);
-    char nn = peek_next(l);
+    char c = l_current(l);
+    char n = l_peek(l);
+    char nn = l_peek_next(l);
 
     if (c == '.' && n == '.' && nn == '=') {
       size_t line = l->line;
       size_t line_start = l->line_start_pos;
       Span span = {0};
       span.start = l->pos;
-      advance(l);
-      advance(l);
-      advance(l);
+      l_advance(l);
+      l_advance(l);
+      l_advance(l);
       span.end = l->pos;
       t = new_token(span, TK_DDOTEQ, line, line_start);
     } else if (c == '&' && n == '&')
@@ -284,7 +284,7 @@ Token next_token(Lexer *l) {
       t = lex_double(l, TK_CCOL);
     else {
       // single
-      t = lex_single(l, current(l));
+      t = lex_single(l, l_current(l));
       // NOTE: it this is tk_illegal, the parser will report with context
     }
   }

@@ -7,7 +7,7 @@
 
 /*\
  * NOTE: these are detailed spans, with their most immediate use in error
- * handling and recovery - parser, name resolution, type checking, ast, runtime
+ * handling and recovery - parser, name resolution, type l_checking, ast, runtime
  * errors
 \*/
 

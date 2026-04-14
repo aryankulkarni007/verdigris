@@ -35,30 +35,30 @@ typedef struct {
 
 TStream lex(Lexer *l);
 
-/// returns current char
-static inline char current(Lexer *l) {
+/// returns l_current char
+static inline char l_current(Lexer *l) {
   if (l->pos >= l->len) // i.e. eof file
     return '\0';
   return l->src[l->pos];
 }
 
-/// peek the char after current
-static inline char peek(Lexer *l) {
+/// l_peek the char after l_current
+static inline char l_peek(Lexer *l) {
   if (l->pos + 1 >= l->len)
     return '\0';
   return l->src[l->pos + 1];
 }
 
-/// peek 2 chars ahead of the current
-static inline char peek_next(Lexer *l) {
+/// l_peek 2 chars ahead of the l_current
+static inline char l_peek_next(Lexer *l) {
   if (l->pos + 2 >= l->len)
     return '\0';
   return l->src[l->pos + 2];
 }
 
-/// handles lexer cusor pos and consumes the tk and advances 1
-static inline void advance(Lexer *l) {
-  char c = current(l);
+/// handles lexer cusor pos and consumes the tk and l_advances 1
+static inline void l_advance(Lexer *l) {
+  char c = l_current(l);
   ++l->pos;
   ++l->col;
   if (c == '\n') {
@@ -69,9 +69,9 @@ static inline void advance(Lexer *l) {
   return;
 }
 
-static inline bool check(Lexer *l, char c) {
-  // silly helper for checking char
-  return current(l) == c;
+static inline bool l_check(Lexer *l, char c) {
+  // silly helper for l_checking char
+  return l_current(l) == c;
 }
 
 void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,

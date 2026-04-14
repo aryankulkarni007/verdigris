@@ -41,7 +41,7 @@ Goal: Validate and infer types
 
 - ( ) Type representation - Primitives, structs, enums, generics
 - ( ) Unification - Hindley-Milner style inference
-- ( ) Interface checking - Structural satisfaction
+- ( ) Interface l_checking - Structural satisfaction
 - ( ) Pattern exhaustiveness - All cases covered
 
 ## Phase 5: HIR Lowering

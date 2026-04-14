@@ -19,17 +19,17 @@ int main(void) {
   {
     DiagBag db = diag_init(&arena);
 
-    SourceSpan error_span = {
-        .path = "test.ri",
-        .start = 43,
-        .end = 48,
-        .line_start = 3,
-        .line_end = 3,
-        .col_start = 9,
-        .col_end = 14,
+    SourceSpan span = {
+        .path = "test.vg",
+        .start = 0,
+        .end = 4,
+        .line_start = 1,
+        .line_end = 1,
+        .col_start = 1,
+        .col_end = 5,
     };
 
-    diag_error(&db, error_span, "E0001", "unexpected token 'let'");
+    diag_error(&db, span, "E0001", "unexpected token 'let'");
 
     assert(db.has_errors == true);
     assert(db.has_warnings == false);
@@ -49,7 +49,7 @@ int main(void) {
     DiagBag db = diag_init(&arena);
 
     SourceSpan span = {
-        .path = "test.ri",
+        .path = "test.vg",
         .start = 10,
         .end = 11,
         .line_start = 2,
@@ -76,9 +76,9 @@ int main(void) {
     DiagBag db = diag_init(&arena);
 
     SourceSpan span1 = {
-        .path = "test.ri", .line_start = 1, .col_start = 1, .col_end = 1};
+        .path = "test.vg", .line_start = 1, .col_start = 1, .col_end = 1};
     SourceSpan span2 = {
-        .path = "test.ri", .line_start = 2, .col_start = 1, .col_end = 1};
+        .path = "test.vg", .line_start = 2, .col_start = 1, .col_end = 1};
 
     diag_error(&db, span1, "E0002", "type mismatch");
     diag_warning(&db, span2, "W0002", "deprecated function");
@@ -126,9 +126,9 @@ int main(void) {
 
     // Error at "x + y" on line 3
     SourceSpan error_span = {
-        .path = "test.ri",
-        .start = 26, // Points to 'x'
-        .end = 31,   // Points to 'y'
+        .path = "test.vg",
+        .start = 43, // 'x' in "x + y"
+        .end = 48,   // 'y' in "x + y"
         .line_start = 3,
         .line_end = 3,
         .col_start = 9,
@@ -142,7 +142,7 @@ int main(void) {
     diag_print_all(&db, source, stdout);
     printf("--- End of pretty print output ---\n\n");
 
-    printf("✓ Pretty printing (visual check)\n");
+    printf("✓ Pretty printing (visual l_check)\n");
   }
 
   // ========================================================================
@@ -151,7 +151,7 @@ int main(void) {
   {
     DiagBag db = diag_init(&arena);
     SourceSpan span = {
-        .path = "test.ri", .line_start = 5, .col_start = 3, .col_end = 6};
+        .path = "test.vg", .line_start = 5, .col_start = 3, .col_end = 6};
 
     diag_error(&db, span, "E0005", "expected %d arguments, got %d", 3, 2);
 

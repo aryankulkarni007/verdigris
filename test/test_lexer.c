@@ -44,7 +44,7 @@ static TStream lex_string(const char *source) {
   return lex(&lexer);
 }
 
-// Helper to check token type
+// Helper to l_check token type
 static void expect_token(Token *t, TK_T expected_type) {
   if (t->type != expected_type) {
     fprintf(stderr, "\n  Expected token type %d, got %d\n", expected_type,
@@ -55,7 +55,7 @@ static void expect_token(Token *t, TK_T expected_type) {
   }
 }
 
-// Helper to check token count
+// Helper to l_check token count
 static void expect_token_count(TStream stream, size_t expected) {
   if (stream.len != expected) {
     fprintf(stderr, "\n  Expected %zu tokens, got %zu\n", expected, stream.len);

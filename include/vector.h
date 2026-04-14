@@ -44,7 +44,7 @@
 //   Vec(AstNode*) nodes = NULL;
 //   size_t nodes_len = 0, nodes_cap = 0;
 //
-// the NULL initialiser is important — vec_push checks it before memcpy.
+// the NULL initialiser is important — vec_push l_checks it before memcpy.
 
 // Vec(T) — just a typedef alias for T*. the type annotation is for the
 // reader, not the compiler. it signals intent: this pointer is a dynamic
@@ -58,7 +58,7 @@
 
 // vec_push — append item to the end of vec. grows if len has reached cap.
 // all five arguments are required: the arena to grow into, the vec pointer,
-// the current length, the current capacity, and the item to append.
+// the l_current length, the l_current capacity, and the item to append.
 // len is incremented in place. cap is updated if growth occurred.
 #define vec_push(arena, vec, len, cap, item)                                   \
   do {                                                                         \
@@ -77,7 +77,7 @@
 // memory — just decrements len.
 #define vec_pop(vec, len) ((len) > 0 ? (vec)[--(len)] : (typeof(*(vec))){0})
 
-// vec_last — peek at the last element without removing it. returns a
+// vec_last — l_peek at the last element without removing it. returns a
 // zero value if empty. useful during parsing when you need to inspect
 // the top of a node stack without popping it.
 #define vec_last(vec, len) ((len) > 0 ? (vec)[(len) - 1] : (typeof(*(vec))){0})
@@ -101,7 +101,7 @@
   } while (0)
 
 // vec_for_each — iterate over every element. iter is a pointer to the
-// current element, so dereference it to get the value.
+// l_current element, so dereference it to get the value.
 //
 //   vec_for_each(nodes, nodes_len, node) {
 //       print_node(*node);
@@ -168,7 +168,7 @@
 #define vec_pop_struct(vec)                                                    \
   ((vec).len > 0 ? (vec).data[--(vec).len] : (typeof(*(vec).data)){0})
 
-// vec_last_struct — peek at the last element of a VecHeader without
+// vec_last_struct — l_peek at the last element of a VecHeader without
 // removing it. returns zero value if empty.
 #define vec_last_struct(vec)                                                   \
   ((vec).len > 0 ? (vec).data[(vec).len - 1] : (typeof(*(vec).data)){0})
@@ -177,7 +177,7 @@
 #define vec_reset_struct(vec) (vec).len = 0
 
 // vec_for_each_struct — iterate over a VecHeader. iter is a pointer to
-// the current element.
+// the l_current element.
 //
 //   vec_for_each_struct(node->children, child) {
 //       visit(*child);

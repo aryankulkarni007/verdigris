@@ -137,8 +137,7 @@ void diag_print_all(DiagBag *db, const char *source, FILE *out) {
 
       fprintf(out, "%s", level_color(d->level));
       for (size_t j = 0; j < width; j++)
-        fprintf(out, "^");
-      // fprintf(out, "‾");
+        fprintf(out, "‾");
       fprintf(out, "\033[0m\n");
     }
     // note or help

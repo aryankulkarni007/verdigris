@@ -10,29 +10,29 @@ void append_trivia_single(Trivia *leading, size_t *count, Trivia t) {
 Trivia lex_wspace(Lexer *l) {
   Trivia wspace = (Trivia){.span = (Span){.start = l->pos, .end = l->pos + 1},
                            .type = TV_WSPACE};
-  advance(l);
+  l_advance(l);
   return wspace;
 }
 
 Trivia lex_nline(Lexer *l) {
   Trivia wspace = (Trivia){.span = (Span){.start = l->pos, .end = l->pos + 1},
                            .type = TV_NEWLINE};
-  advance(l);
+  l_advance(l);
   return wspace;
 }
 
 Trivia lex_tab(Lexer *l) {
   Trivia tab = (Trivia){.span = (Span){.start = l->pos, .end = l->pos + 1},
                         .type = TV_TAB};
-  advance(l);
+  l_advance(l);
   return tab;
 }
 
 /// call before advancing past -- for comments
 Trivia lex_comment(Lexer *l) {
   size_t start_pos = l->pos;
-  while (current(l) != '\n' && current(l) != '\0') {
-    advance(l);
+  while (l_current(l) != '\n' && l_current(l) != '\0') {
+    l_advance(l);
   }
   return (Trivia){.span = {.start = start_pos, .end = l->pos},
                   .type = TV_COMMENT};
@@ -41,8 +41,8 @@ Trivia lex_comment(Lexer *l) {
 /// call before advancing past --- for doc comments
 Trivia lex_docc(Lexer *l) {
   size_t start_pos = l->pos;
-  while (current(l) != '\n' && current(l) != '\0') {
-    advance(l);
+  while (l_current(l) != '\n' && l_current(l) != '\0') {
+    l_advance(l);
   }
   return (Trivia){.span = {.start = start_pos, .end = l->pos}, .type = TV_DOCC};
 }
@@ -51,15 +51,15 @@ Trivia lex_docc(Lexer *l) {
 Trivia lex_blockc(Lexer *l) {
   size_t start_pos = l->pos;
 
-  advance(l);
-  advance(l);
-  while (current(l) != '\0') {
-    if (current(l) == '-' && peek(l) == '*') {
-      advance(l); // '-'
-      advance(l); // '*'
+  l_advance(l);
+  l_advance(l);
+  while (l_current(l) != '\0') {
+    if (l_current(l) == '-' && l_peek(l) == '*') {
+      l_advance(l); // '-'
+      l_advance(l); // '*'
       break;
     }
-    advance(l);
+    l_advance(l);
   }
   return (Trivia){.span = {.start = start_pos, .end = l->pos},
                   .type = TV_BLOCKC};

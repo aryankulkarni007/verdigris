@@ -1,17 +1,17 @@
 decision tree
 
-'+'  → TK_PLUS or TK_PLUSEQ (peek '=')
+'+'  → TK_PLUS or TK_PLUSEQ (l_peek '=')
 '-'  → TK_MINUS, TK_MINUSEQ, TK_ARROW (already handled comments in trivia)
 '*'  → TK_STAR or TK_STAREQ
 '/'  → TK_SLASH or TK_SLASHEQ
 '='  → TK_ASSIGN, TK_EQ, TK_FATARROW
 '<'  → TK_LT or TK_LTEQ
 '>'  → TK_GT or TK_GTEQ
-'!'  → TK_BANG or TK_NEQ (peek '=')
-'&'  → TK_AMP or TK_AND (peek '&')
-'|'  → TK_PIPE or TK_OR (peek '|')
-'.'  → TK_DOT or TK_DDOT (peek '.')
-':'  → TK_COL or TK_CCOL (peek ':')
+'!'  → TK_BANG or TK_NEQ (l_peek '=')
+'&'  → TK_AMP or TK_AND (l_peek '&')
+'|'  → TK_PIPE or TK_OR (l_peek '|')
+'.'  → TK_DOT or TK_DDOT (l_peek '.')
+':'  → TK_COL or TK_CCOL (l_peek ':')
 '('  → TK_OPAREN
 ')'  → TK_CPAREN
 '{'  → TK_OBRACE

@@ -58,7 +58,7 @@ InternID intern_string(InternTable *it, const char *str, size_t len) {
     }
     index = (index + 1) & (it->capacity - 1);
   }
-  // check load factor and grow if needed
+  // l_check load factor and grow if needed
   if (it->count >= (it->capacity * 3) / 4) { // 0.75 load factor
     intern_grow(it);
     // recompute index after growth
