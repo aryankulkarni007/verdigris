@@ -9,6 +9,7 @@ typedef struct Trivia Trivia;
 typedef Trivia (*TriviaLexerFn)(Lexer *l);
 
 #define TRIVIA_T(X)                                                            \
+  X(TV_ERROR)                                                                  \
   X(TV_WSPACE)                                                                 \
   X(TV_NEWLINE)                                                                \
   X(TV_TAB)                                                                    \
@@ -23,10 +24,20 @@ typedef enum {
 
 } TV_T;
 
+static const char *tv_names[] = {
+#define AS_STRING(name) #name,
+    TRIVIA_T(AS_STRING)
+#undef AS_STRING
+};
+
+static inline const char *tv_name(TV_T type) { return tv_names[type]; }
+
 struct Trivia {
   Span span;
   TV_T type;
 };
+
+void append_trivia_single(Trivia *leading, size_t *count, Trivia t);
 
 Trivia lex_wspace(Lexer *l);
 Trivia lex_nline(Lexer *l);

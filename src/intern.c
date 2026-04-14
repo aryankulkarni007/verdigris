@@ -95,7 +95,7 @@ InternID intern_cstr(InternTable *it, const char *str) {
   return intern_string(it, str, strlen(str));
 }
 
-// DEBUG
+// info dump
 void intern_dump(InternTable *it) {
   printf("=== Intern Table ===\n");
   printf("Capacity: %zu\n", it->capacity);

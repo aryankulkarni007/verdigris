@@ -81,6 +81,5 @@ int main(int argc, char *argv[]) {
   arena_destroy(&token_arena);
   arena_destroy(&trivia_arena);
   arena_destroy(&string_arena);
-  free(src.buffer);
   return 0;
 }

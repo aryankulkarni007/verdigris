@@ -97,13 +97,22 @@ typedef struct Span Span;
   /* ── attributes ─────────────────────────────────────────────────────── */  \
   X(TK_AT) /* @    — attribute prefix: @inline, @extern            */          \
   /* ── optional / error handling ──────────────────────────────────────── */  \
-  X(TK_QUESTION) /* ?    — optional type suffix: ?int                    */
+  X(TK_QUESTION) /* ?    — optional type suffix: ?int                    */    \
+  X(TK_ERROR)    /* for error handling */
 
 typedef enum {
 #define AS_ENUM(name) name,
   TOKEN_T(AS_ENUM)
 #undef AS_ENUM
 } TK_T;
+
+static const char *tk_names[] = {
+#define AS_STRING(name) #name,
+    TOKEN_T(AS_STRING)
+#undef AS_STRING
+};
+
+static inline const char *tk_name(TK_T type) { return tk_names[type]; }
 
 struct Span {
   size_t start;

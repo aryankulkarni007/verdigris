@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define MAX_TRIVIA 64
+
 typedef struct Lexer Lexer;
 
 struct Lexer {

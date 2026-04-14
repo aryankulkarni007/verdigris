@@ -7,7 +7,7 @@ Goal: Rock-solid infrastructure before parsing
 - (X) Arena allocator
 - (X) String interning (in progress - see evaluation below)
 - (X) Vec macros (dynamic arrays for token streams, CST children)
-- (~) Source spans (line/col tracking from lexer)
+- (X) Source spans (line/col tracking from lexer)
 - ( ) Diagnostic system (error/warning collection and printing)
 - ( ) Symbol table scaffold (scope management, name->declaration mapping)
 

@@ -1,6 +1,12 @@
 #include "../include/trivia.h"
 #include "../include/lexer.h"
 
+void append_trivia_single(Trivia *leading, size_t *count, Trivia t) {
+  if (*count < MAX_TRIVIA) {
+    leading[(*count)++] = t;
+  }
+}
+
 Trivia lex_wspace(Lexer *l) {
   Trivia wspace = (Trivia){.span = (Span){.start = l->pos, .end = l->pos + 1},
                            .type = TV_WSPACE};

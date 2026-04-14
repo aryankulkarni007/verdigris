@@ -3,9 +3,12 @@
 // no-lsp
 
 -- single line comments
--* block comment, can span
- * multiple lines
+
 -*
+ * block comment, can span
+ * multiple lines
+*-
+
 --- documentation comment, attaches to the next declaration
 
 -- ==========================================================================

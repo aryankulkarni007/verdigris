@@ -2,21 +2,6 @@
 #include "../include/trivia.h"
 #include <stdio.h>
 
-static const char *tk_names[] = {
-#define AS_STRING(name) #name,
-    TOKEN_T(AS_STRING)
-#undef AS_STRING
-};
-
-static const char *tv_names[] = {
-#define AS_STRING(name) #name,
-    TRIVIA_T(AS_STRING)
-#undef AS_STRING
-};
-
-static const char *tk_name(TK_T type) { return tk_names[type]; }
-static const char *tv_name(TV_T type) { return tv_names[type]; }
-
 void print_token(Token *t, const char *source_buffer) {
   if (!t)
     return;

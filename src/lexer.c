@@ -6,19 +6,34 @@
 
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
-#define MAX_TRIVIA 64
-
 static const TK_T char_tk[256] = {
-    ['+'] = TK_PLUS,   ['-'] = TK_MINUS,    ['*'] = TK_STAR,
-    ['/'] = TK_SLASH,  ['('] = TK_OPAREN,   [')'] = TK_CPAREN,
-    ['{'] = TK_OBRACE, ['}'] = TK_CBRACE,   ['['] = TK_OBRACK,
-    [']'] = TK_CBRACK, [';'] = TK_SEMI,     [','] = TK_COMMA,
-    ['.'] = TK_DOT,    [':'] = TK_COL,      ['='] = TK_ASSIGN,
-    ['<'] = TK_LT,     ['>'] = TK_GT,       ['!'] = TK_BANG,
-    ['&'] = TK_AMP,    ['|'] = TK_PIPE,     ['%'] = TK_MODULO,
-    ['@'] = TK_AT,     ['?'] = TK_QUESTION,
+    ['+'] = TK_PLUS,
+    ['-'] = TK_MINUS,
+    ['*'] = TK_STAR,
+    ['/'] = TK_SLASH,
+    ['('] = TK_OPAREN,
+    [')'] = TK_CPAREN,
+    ['{'] = TK_OBRACE,
+    ['}'] = TK_CBRACE,
+    ['['] = TK_OBRACK,
+    [']'] = TK_CBRACK,
+    [';'] = TK_SEMI,
+    [','] = TK_COMMA,
+    ['.'] = TK_DOT,
+    [':'] = TK_COL,
+    ['='] = TK_ASSIGN,
+    ['<'] = TK_LT,
+    ['>'] = TK_GT,
+    ['!'] = TK_BANG,
+    ['&'] = TK_AMP,
+    ['|'] = TK_PIPE,
+    ['%'] = TK_MODULO,
+    ['@'] = TK_AT,
+    ['?'] = TK_QUESTION,
+    ['_'] = TK_UND
     // all other indices default to 0 (TK_ILLEGAL)
 };
 
@@ -90,15 +105,22 @@ static Token lex_string(Lexer *l) {
     }
     advance(l);
   }
-  size_t end = l->pos;
-  if (current(l) == '"') {
-    advance(l); // closing quote
+
+  if (current(l) == '\0') {
+    return (Token){
+        .span = {.start = start - 1, .end = l->pos}, // include opening quote
+        .type = TK_ILLEGAL,
+        .line = line,
+        .line_start_pos = line_start};
   }
 
+  size_t end = l->pos;
+  advance(l); // closing quote
   size_t len = end - start;
+
   InternID id = intern_string(l->intern, l->src + start, len);
   return (Token){
-      .span = {.start = start, .end = end},
+      .span = {.start = start, .end = end}, // WARN: excludes quotes
       .type = TK_STRING,
       .line = line,
       .line_start_pos = line_start,
@@ -111,9 +133,11 @@ Token lex_single(Lexer *l, char tk) {
   size_t line = l->line;
   size_t line_start = l->line_start_pos;
   advance(l);
+
+  TK_T type = char_tk[(unsigned char)tk];
   return (Token){
       .span = {.start = start, .end = l->pos},
-      .type = char_tk[(unsigned char)tk],
+      .type = type,
       .line = line,
       .line_start_pos = line_start,
   };
@@ -149,6 +173,7 @@ static void attach_trivia_to_token(Token *t, Lexer *l, Trivia *source,
 Token next_token(Lexer *l) {
   Trivia leading[MAX_TRIVIA];
   size_t leading_count = 0;
+  Token t;
 
   // collect trivia
   while (true) {
@@ -161,19 +186,45 @@ Token next_token(Lexer *l) {
       append_trivia(l, lex_tab, leading, &leading_count);
     else if (c == '-' && peek(l) == '-' && peek_next(l) == '-')
       append_trivia(l, lex_docc, leading, &leading_count);
-    else if (c == '-' && peek(l) == '*')
-      append_trivia(l, lex_blockc, leading, &leading_count);
-    else if (c == '-' && peek(l) == '-')
+    else if (c == '-' && peek(l) == '*') {
+      size_t start = l->pos;
+      advance(l); // '-'
+      advance(l); // '*'
+      while (current(l) != '\0' && !(current(l) == '*' && peek(l) == '-'))
+        advance(l);
+
+      if (current(l) == '\0') {
+        // unterminated blockc
+        Token t = (Token){
+            .span = {.start = start, .end = l->pos},
+            .type = TK_ERROR,
+            .line = l->line,
+            .line_start_pos = l->line_start_pos,
+        };
+        attach_trivia_to_token(&t, l, leading, leading_count);
+        return t;
+      }
+      advance(l); // '*'
+      advance(l); // '-'
+      Trivia trivia = {
+          .span = {.start = start, .end = l->pos},
+          .type = TV_BLOCKC,
+      };
+
+      append_trivia_single(leading, &leading_count, trivia);
+      continue;
+    } else if (c == '-' && peek(l) == '-')
       append_trivia(l, lex_comment, leading, &leading_count);
     else
       break;
   }
 
-  Token t;
-
   // big
-  if (isdigit(current(l))) {
+  if (isdigit(current(l)) || (current(l) == '.' && isdigit(peek(l)))) {
     t = lex_num(l);
+  } else if (current(l) == '_' && !isalnum(peek(l))) {
+    // Standalone underscore
+    t = lex_single(l, '_');
   } else if (isalnum(current(l)) || current(l) == '_') {
     t = lex_ident(l);
   } else if (current(l) == '"') {
@@ -234,6 +285,7 @@ Token next_token(Lexer *l) {
     else {
       // single
       t = lex_single(l, current(l));
+      // NOTE: it this is tk_illegal, the parser will report with context
     }
   }
 
