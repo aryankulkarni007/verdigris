@@ -49,10 +49,11 @@ void print_token(Token *t, const char *source_buffer) {
          tk_name(t->type), (int)length, lexeme, t->span.start, t->span.end);
 }
 
-Token new_token(Span span, TK_T type, uint32_t line) {
+Token new_token(Span span, TK_T type, uint32_t line, size_t line_start_pos) {
   return (Token){
       .span = span,
       .type = type,
       .line = line,
+      .line_start_pos = line_start_pos,
   };
 }

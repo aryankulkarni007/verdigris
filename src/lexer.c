@@ -25,10 +25,12 @@ static const TK_T char_tk[256] = {
 void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,
                 Arena *trivia_arena, const Source *src, InternTable *table) {
   l->src = src->buffer;
+  l->file_path = src->file_path;
   l->len = src->file_size;
   l->pos = 0;
   l->line = 1;
   l->col = 1;
+  l->line_start_pos = 0;
   l->token_arena = token_arena;
   l->trivia_arena = trivia_arena;
   l->string_arena = string_arena;
@@ -38,6 +40,7 @@ void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,
 static Token lex_ident(Lexer *l) {
   size_t start = l->pos;
   size_t line = l->line;
+  size_t line_start = l->line_start_pos;
   while (isalnum(current(l)) || current(l) == '_')
     advance(l);
 
@@ -46,12 +49,14 @@ static Token lex_ident(Lexer *l) {
   return (Token){.span = {.start = start, .end = l->pos},
                  .type = TK_IDENT,
                  .line = line,
+                 .line_start_pos = line_start,
                  .id = id};
 }
 
 static Token lex_num(Lexer *l) {
   size_t start = l->pos;
   size_t line = l->line;
+  size_t line_start = l->line_start_pos;
   bool is_float = false;
   while (isdigit(current(l)) || current(l) == '.') {
     if (current(l) == '.') {
@@ -68,6 +73,7 @@ static Token lex_num(Lexer *l) {
       .span = {.start = start, .end = l->pos},
       .type = is_float ? TK_FLOAT : TK_INT,
       .line = line,
+      .line_start_pos = line_start,
   };
 }
 
@@ -75,6 +81,7 @@ static Token lex_string(Lexer *l) {
   advance(l); // '"'
   size_t start = l->pos;
   size_t line = l->line;
+  size_t line_start = l->line_start_pos;
   while (current(l) != '"' && current(l) != '\0') {
     if (current(l) == '\\' && peek(l) == '"') {
       advance(l);
@@ -94,31 +101,33 @@ static Token lex_string(Lexer *l) {
       .span = {.start = start, .end = end},
       .type = TK_STRING,
       .line = line,
+      .line_start_pos = line_start,
       .id = id,
   };
 }
 
-Token lex_single(Lexer *l, char tk, Trivia *leading, size_t leading_count) {
+Token lex_single(Lexer *l, char tk) {
   size_t start = l->pos;
   size_t line = l->line;
+  size_t line_start = l->line_start_pos;
   advance(l);
   return (Token){
       .span = {.start = start, .end = l->pos},
       .type = char_tk[(unsigned char)tk],
       .line = line,
-      .leading = leading,
-      .leading_count = leading_count,
+      .line_start_pos = line_start,
   };
 }
 
 Token lex_double(Lexer *l, TK_T type) {
   size_t line = l->line;
+  size_t line_start = l->line_start_pos;
   Span span = {0};
   span.start = l->pos;
   advance(l);
   advance(l); // '='
   span.end = l->pos;
-  return new_token(span, type, line);
+  return new_token(span, type, line, line_start);
 }
 
 static void attach_trivia_to_token(Token *t, Lexer *l, Trivia *source,
@@ -136,7 +145,7 @@ static void attach_trivia_to_token(Token *t, Lexer *l, Trivia *source,
 }
 
 /// phase 1: collect trivia into stack
-/// phase 2: attack trivia to next token
+/// phase 2: attach trivia to next token
 Token next_token(Lexer *l) {
   Trivia leading[MAX_TRIVIA];
   size_t leading_count = 0;
@@ -170,13 +179,10 @@ Token next_token(Lexer *l) {
   } else if (current(l) == '"') {
     t = lex_string(l);
   } else if (current(l) == '\0') {
-    t = (Token){
-        .span = {.start = l->pos, .end = l->pos},
-        .type = TK_EOF,
-        .line = l->line,
-        .leading = leading,
-        .leading_count = leading_count,
-    };
+    t = (Token){.span = {.start = l->pos, .end = l->pos},
+                .type = TK_EOF,
+                .line = l->line,
+                .line_start_pos = l->line_start_pos};
   } else {
     // double and triple
     char c = current(l);
@@ -185,13 +191,14 @@ Token next_token(Lexer *l) {
 
     if (c == '.' && n == '.' && nn == '=') {
       size_t line = l->line;
+      size_t line_start = l->line_start_pos;
       Span span = {0};
       span.start = l->pos;
       advance(l);
       advance(l);
       advance(l);
       span.end = l->pos;
-      t = new_token(span, TK_DDOTEQ, line);
+      t = new_token(span, TK_DDOTEQ, line, line_start);
     } else if (c == '&' && n == '&')
       t = lex_double(l, TK_AND);
     else if (c == '|' && n == '|')
@@ -226,7 +233,7 @@ Token next_token(Lexer *l) {
       t = lex_double(l, TK_CCOL);
     else {
       // single
-      t = lex_single(l, current(l), leading, leading_count);
+      t = lex_single(l, current(l));
     }
   }
 

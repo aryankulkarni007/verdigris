@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct Span Span;
 typedef struct Token Token;
+typedef struct Span Span;
 
 /* ai documentation comes to save the day */
 
@@ -114,6 +114,7 @@ struct Token {
   Span span;
   TK_T type;
   uint32_t line; // for error reporting
+  size_t line_start_pos;
 
   struct Trivia *leading;
   size_t leading_count;
@@ -121,6 +122,6 @@ struct Token {
 };
 
 void print_token(Token *t, const char *source_buffer);
-Token new_token(Span span, TK_T type, uint32_t line);
+Token new_token(Span span, TK_T type, uint32_t line, size_t line_start_pos);
 
 #endif // TOKEN_H

@@ -6,6 +6,7 @@
 typedef struct {
   size_t file_size;
   char *buffer;
+  char *file_path;
 } Source;
 
 #endif // MAIN_H

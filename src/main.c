@@ -46,7 +46,7 @@ Source handle_file(char *path) {
 
   buffer[file_size] = '\0';
   fclose(file);
-  return (Source){.file_size = file_size, .buffer = buffer};
+  return (Source){.file_size = file_size, .buffer = buffer, .file_path = path};
 }
 
 int main(int argc, char *argv[]) {

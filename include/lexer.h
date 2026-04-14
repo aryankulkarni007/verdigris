@@ -12,10 +12,13 @@ typedef struct Lexer Lexer;
 
 struct Lexer {
   const char *src;
+  const char *file_path;
   size_t len;
   size_t pos;
   size_t line;
   size_t col;
+  size_t line_start_pos;
+
   Arena *token_arena;
   Arena *trivia_arena;
   Arena *string_arena;
@@ -59,6 +62,7 @@ static inline void advance(Lexer *l) {
   if (c == '\n') {
     ++l->line;
     l->col = 1;
+    l->line_start_pos = l->pos;
   }
   return;
 }
