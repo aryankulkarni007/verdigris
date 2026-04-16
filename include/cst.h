@@ -490,7 +490,7 @@ typedef struct {
 typedef struct {
   CST_NODE_BASE;
   Token *oparen;
-  VecHeader(cst_p *) elements;
+  VecHeader(cst_p *) lmnts;
   Token *cparen;
 } TUPLE_P_CSTN;
 

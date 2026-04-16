@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
   // intern_dump(&table);
 
   // super cool macro
-  vec_for_each_struct(stream, t) { print_token(t, src.buffer); }
+  vec_for_each_struct(stream, t) print_token(t, src.buffer);
 
   arena_destroy(&token_arena);
   arena_destroy(&trivia_arena);

@@ -22,24 +22,26 @@ Arena arena_init(size_t reserve_size) {
 void *arena_alloc(Arena *a, size_t size) {
   size = (size + 7) & ~7;
 
-  // l_check if we need more ram
   if (a->used + size > a->committed) {
     size_t page_size = 64 * 1024;
     size_t needed = a->used + size - a->committed;
     size_t to_commit = ((needed + page_size - 1) / page_size) * page_size;
 
-    // out of space
-    if (a->committed + to_commit > a->reserved)
-      return NULL;
+    if (a->committed + to_commit > a->reserved) {
+      fprintf(stderr, "Arena OOM\n");
+      abort();
+    }
 
-    mprotect(a->base + a->committed, to_commit, PROT_READ | PROT_WRITE);
+    mprotect((uint8_t *)a->base + a->committed, to_commit,
+             PROT_READ | PROT_WRITE);
+
     a->committed += to_commit;
   }
-  void *ptr = a->base + a->used;
+
+  void *ptr = (uint8_t *)a->base + a->used;
   a->used += size;
   return ptr;
 }
-
 void arena_destroy(Arena *a) {
   // unmap the mmaped memory
   munmap(a->base, a->reserved);

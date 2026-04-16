@@ -52,14 +52,14 @@ cst_p *cst_new_enum_pat(Arena *a, Token *variant);
 cst_p *cst_new_struct_pat(Arena *a, Token *type_name, Token *obrace,
                           Token *cbrace);
 cst_p *cst_new_tuple_pat(Arena *a, Token *oparen, Token *cparen);
-cst_p *cst_new_guard_pat(Arena *a, cst_p *inner, Token *_if);
+cst_p *cst_new_guard_pat(Arena *a, cst_p *inner, Token *_if, cst_e *guard);
 
 /* statements */
 cst_s *cst_new_expr_stmt(Arena *a, cst_e *expr, Token *semi);
-cst_s *cst_new_return_stmt(Arena *a, Token *ret, Token *semi);
+cst_s *cst_new_return_stmt(Arena *a, Token *ret, cst_e *expr, Token *semi);
 cst_s *cst_new_break_stmt(Arena *a, Token *brk, Token *semi);
 cst_s *cst_new_continue_stmt(Arena *a, Token *cont, Token *semi);
-cst_s *cst_new_defer_stmt(Arena *a, Token *defer, Token *semi);
+cst_s *cst_new_defer_stmt(Arena *a, Token *defer, cst_e *expr, Token *semi);
 cst_s *cst_new_if_stmt(Arena *a, Token *_if, cst_e *cond, Token *_else);
 cst_s *cst_new_while_stmt(Arena *a, Token *whl, cst_e *cond);
 cst_s *cst_new_loop_stmt(Arena *a, Token *loop);

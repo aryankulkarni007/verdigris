@@ -9,6 +9,7 @@ OBJ_DIR  := obj
 BIN         := verdigris
 TEST_LEXER  := test_lexer
 TEST_DIAG   := test_diagnostic
+TEST_PRETTY := test_pretty
 
 # ------------------------------------------------------------------------------
 # Source files
@@ -28,7 +29,7 @@ TEST_OBJS := $(TEST_SRCS:$(TEST_DIR)/%.c=$(OBJ_DIR)/%.o)
 # ------------------------------------------------------------------------------
 # Targets
 # ------------------------------------------------------------------------------
-.PHONY: all clean rebuild test test-lexer test-diag
+.PHONY: all clean rebuild test test-lexer test-diag test-pretty
 
 all: $(BIN)
 
@@ -40,6 +41,10 @@ $(TEST_LEXER): $(LIB_OBJS) $(OBJ_DIR)/test_lexer.o
 
 $(TEST_DIAG): $(LIB_OBJS) $(OBJ_DIR)/test_diagnostic.o $(OBJ_DIR)/diagnostic.o
 	$(CC) $^ $(LDFLAGS) -o $@
+
+$(TEST_PRETTY): $(LIB_OBJS) $(OBJ_DIR)/test_pretty.o $(OBJ_DIR)/pretty.o $(OBJ_DIR)/cst.o
+	$(CC) $^ $(LDFLAGS) -o $@
+
 
 # ------------------------------------------------------------------------------
 # Compilation rules
@@ -56,7 +61,7 @@ $(OBJ_DIR):
 # ------------------------------------------------------------------------------
 # Testing
 # ------------------------------------------------------------------------------
-test: test-lexer test-diag
+test: test-lexer test-diag test-pretty
 
 test-lexer: $(TEST_LEXER)
 	./$(TEST_LEXER)
@@ -64,12 +69,15 @@ test-lexer: $(TEST_LEXER)
 test-diag: $(TEST_DIAG)
 	./$(TEST_DIAG)
 
+test-pretty: $(TEST_PRETTY)
+	./$(TEST_PRETTY)
+
 # ------------------------------------------------------------------------------
 # Cleanup
 # ------------------------------------------------------------------------------
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(BIN) $(TEST_LEXER) $(TEST_DIAG)
+	rm -f $(BIN) $(TEST_LEXER) $(TEST_DIAG) $(TEST_PRETTY)
 	rm -rf *.dSYM
 
 rebuild: clean all
