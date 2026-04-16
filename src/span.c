@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 
-SourceSpan span_from_token(const char *file_path, const Token *t) {
+SourceSpan span_from_token(Token *t) {
   return (SourceSpan){
-      .path = file_path,
+      .path = t->path,
       .start = t->span.start,
       .end = t->span.end,
       .line_start = t->line,

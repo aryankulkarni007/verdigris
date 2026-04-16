@@ -161,6 +161,6 @@ int main(void) {
     printf("✓ Formatted messages\n");
   }
 
-  printf("\n✅ All diagnostic tests passed!\n");
+  printf("\nAll diagnostic tests passed!\n");
   return 0;
 }

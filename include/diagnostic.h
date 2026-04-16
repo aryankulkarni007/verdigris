@@ -1,5 +1,4 @@
-#ifndef DIAGNOSTIC_H
-#define DIAGNOSTIC_H
+#pragma once
 
 #include "span.h"
 #include "vector.h"
@@ -54,5 +53,3 @@ bool diag_ok(DiagBag *bag);
 //   diag_print_all(&diags, source, stderr);
 //   return 1;
 // }
-
-#endif // DIAGNOSTIC_H

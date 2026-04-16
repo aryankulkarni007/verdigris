@@ -1,5 +1,4 @@
-#ifndef INTERN_H
-#define INTERN_H
+#pragma once
 
 #include "arena.h"
 #include <stdbool.h>
@@ -37,5 +36,3 @@ bool intern_eq(InternID a, InternID b);
 
 InternID intern_cstr(InternTable *it, const char *str);
 void intern_dump(InternTable *it);
-
-#endif //  INTERN_H

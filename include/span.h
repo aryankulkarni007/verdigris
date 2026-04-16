@@ -1,5 +1,4 @@
-#ifndef SPAN_H
-#define SPAN_H
+#pragma once
 
 #include "token.h"
 #include <stddef.h>
@@ -7,8 +6,8 @@
 
 /*\
  * NOTE: these are detailed spans, with their most immediate use in error
- * handling and recovery - parser, name resolution, type l_checking, ast, runtime
- * errors
+ * handling and recovery - parser, name resolution, type l_checking, ast,
+ * runtime errors
 \*/
 
 typedef struct SourceSpan {
@@ -21,10 +20,9 @@ typedef struct SourceSpan {
   size_t col_end;    // ending col
 } SourceSpan;
 
-SourceSpan span_from_token(const char *file_path, const Token *t);
+SourceSpan span_from_token(Token *t);
 /// dummy span for compiler-generated nodes
 SourceSpan span_dummy(void);
 /// Print source context for error messages
 void span_print_context(SourceSpan span, const char *source, FILE *out);
-
-#endif // SPAN_H
+SourceSpan span_merge(SourceSpan a, SourceSpan b);

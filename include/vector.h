@@ -1,5 +1,4 @@
-#ifndef VECTOR_H
-#define VECTOR_H
+#pragma once
 
 #include "arena.h"
 #include <string.h>
@@ -193,5 +192,3 @@
   do {                                                                         \
     (vec).len = 0;                                                             \
   } while (0)
-
-#endif // VECTOR_H

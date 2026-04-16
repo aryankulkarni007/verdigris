@@ -1,5 +1,4 @@
-#ifndef ARENA_H
-#define ARENA_H
+#pragma once
 
 #include <stddef.h>
 
@@ -15,5 +14,3 @@ typedef struct {
 Arena arena_init(size_t reserve_size);
 void *arena_alloc(Arena *a, size_t size);
 void arena_destroy(Arena *a);
-
-#endif //  ARENA_H

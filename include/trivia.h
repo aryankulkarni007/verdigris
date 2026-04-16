@@ -1,5 +1,4 @@
-#ifndef TRIVIA_H
-#define TRIVIA_H
+#pragma once
 
 #include "lexer.h"
 #include "token.h"
@@ -47,5 +46,3 @@ Trivia lex_docc(Lexer *l);
 Trivia lex_blockc(Lexer *l);
 void append_trivia(Lexer *l, TriviaLexerFn lex_fn, Trivia *leading,
                    size_t *leading_count);
-
-#endif // TRIVIA_H

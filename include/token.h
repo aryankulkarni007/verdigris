@@ -1,5 +1,4 @@
-#ifndef TOKEN_H
-#define TOKEN_H
+#pragma once
 
 #include "intern.h"
 #include <stddef.h>
@@ -22,7 +21,7 @@ typedef struct Span Span;
   X(TK_TRUE)   /* boolean true  (lexed as ident, reserved for later)   */      \
   X(TK_FALSE)  /* boolean false (lexed as ident, reserved for later)   */      \
   /* ── keywords ───────────────────────────────────────────────────────── */  \
-  /* NOTE: all keywords are l_currently lexed as TK_IDENT and distinguished  */  \
+  /* NOTE: all keywords are l_currently lexed as TK_IDENT and distinguished */ \
   /* by the parser via intern pointer comparison. these entries are kept    */ \
   /* here as documentation and for future use if keyword lexing is added.  */  \
   X(TK_AS)        /* as    — type cast: x as float                        */   \
@@ -124,6 +123,7 @@ struct Token {
   TK_T type;
   uint32_t line; // for error reporting
   size_t line_start_pos;
+  char *path;
 
   struct Trivia *leading;
   size_t leading_count;
@@ -131,6 +131,5 @@ struct Token {
 };
 
 void print_token(Token *t, const char *source_buffer);
-Token new_token(Span span, TK_T type, uint32_t line, size_t line_start_pos);
-
-#endif // TOKEN_H
+Token new_token(Span span, TK_T type, uint32_t line, size_t line_start_pos,
+                char *path);

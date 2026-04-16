@@ -7,9 +7,11 @@
 #include "../include/main.h"
 #include "../include/vector.h"
 
-#define ERROR(x)                                                               \
-  fprintf(stderr, "%s\n", x);                                                  \
-  return (Source) { .file_size = 0, .buffer = NULL }
+#define error(x)                                                               \
+  do {                                                                         \
+    fprintf(stderr, "%s\n", x);                                                \
+    return (Source){.file_size = 0, .buffer = NULL};                           \
+  } while (0)
 
 void print_version() {
   printf("Verdigris Compiler v0.1.0\n");
@@ -24,11 +26,11 @@ void print_usage(char *exec) {
 Source handle_file(char *path) {
   FILE *file = fopen(path, "rb");
   if (!file) {
-    ERROR("fopen error");
+    error("fopen error");
   }
 
   if (fseek(file, 0, SEEK_END) == -1) {
-    ERROR("fseek error");
+    error("fseek error");
   }
 
   size_t file_size = ftell(file);
@@ -36,12 +38,12 @@ Source handle_file(char *path) {
 
   char *buffer = malloc(file_size + 1);
   if (!buffer) {
-    ERROR("buffer allocation error");
+    error("buffer allocation error");
   }
 
   long result = fread(buffer, 1, file_size, file);
   if (result != (long)file_size) {
-    ERROR("fread error");
+    error("fread error");
   }
 
   buffer[file_size] = '\0';

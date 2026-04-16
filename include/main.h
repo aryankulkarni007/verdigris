@@ -1,5 +1,4 @@
-#ifndef MAIN_H
-#define MAIN_H
+#pragma once
 
 #include <stddef.h>
 
@@ -8,5 +7,3 @@ typedef struct {
   const char *buffer;
   const char *file_path;
 } Source;
-
-#endif // MAIN_H

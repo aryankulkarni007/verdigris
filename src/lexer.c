@@ -65,6 +65,7 @@ static Token lex_ident(Lexer *l) {
                  .type = TK_IDENT,
                  .line = line,
                  .line_start_pos = line_start,
+                 .path = l->file_path,
                  .id = id};
 }
 
@@ -89,6 +90,7 @@ static Token lex_num(Lexer *l) {
       .type = is_float ? TK_FLOAT : TK_INT,
       .line = line,
       .line_start_pos = line_start,
+      .path = l->file_path,
   };
 }
 
@@ -111,7 +113,9 @@ static Token lex_string(Lexer *l) {
         .span = {.start = start - 1, .end = l->pos}, // include opening quote
         .type = TK_ILLEGAL,
         .line = line,
-        .line_start_pos = line_start};
+        .line_start_pos = line_start,
+        .path = l->file_path,
+    };
   }
 
   size_t end = l->pos;
@@ -124,6 +128,7 @@ static Token lex_string(Lexer *l) {
       .type = TK_STRING,
       .line = line,
       .line_start_pos = line_start,
+      .path = l->file_path,
       .id = id,
   };
 }
@@ -140,6 +145,7 @@ Token lex_single(Lexer *l, char tk) {
       .type = type,
       .line = line,
       .line_start_pos = line_start,
+      .path = l->file_path,
   };
 }
 
@@ -151,7 +157,7 @@ Token lex_double(Lexer *l, TK_T type) {
   l_advance(l);
   l_advance(l); // '='
   span.end = l->pos;
-  return new_token(span, type, line, line_start);
+  return new_token(span, type, line, line_start, l->file_path);
 }
 
 static void attach_trivia_to_token(Token *t, Lexer *l, Trivia *source,
@@ -195,12 +201,11 @@ Token next_token(Lexer *l) {
 
       if (l_current(l) == '\0') {
         // unterminated blockc
-        Token t = (Token){
-            .span = {.start = start, .end = l->pos},
-            .type = TK_ERROR,
-            .line = l->line,
-            .line_start_pos = l->line_start_pos,
-        };
+        Token t = (Token){.span = {.start = start, .end = l->pos},
+                          .type = TK_ERROR,
+                          .line = l->line,
+                          .line_start_pos = l->line_start_pos,
+                          .path = l->file_path};
         attach_trivia_to_token(&t, l, leading, leading_count);
         return t;
       }
@@ -233,7 +238,9 @@ Token next_token(Lexer *l) {
     t = (Token){.span = {.start = l->pos, .end = l->pos},
                 .type = TK_EOF,
                 .line = l->line,
-                .line_start_pos = l->line_start_pos};
+                .line_start_pos = l->line_start_pos,
+                .path = l->file_path};
+
   } else {
     // double and triple
     char c = l_current(l);
@@ -249,7 +256,7 @@ Token next_token(Lexer *l) {
       l_advance(l);
       l_advance(l);
       span.end = l->pos;
-      t = new_token(span, TK_DDOTEQ, line, line_start);
+      t = new_token(span, TK_DDOTEQ, line, line_start, l->file_path);
     } else if (c == '&' && n == '&')
       t = lex_double(l, TK_AND);
     else if (c == '|' && n == '|')

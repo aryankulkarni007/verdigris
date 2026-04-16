@@ -1,5 +1,4 @@
-#ifndef LEXER_H
-#define LEXER_H
+#pragma once
 
 #include "arena.h"
 #include "intern.h"
@@ -14,7 +13,7 @@ typedef struct Lexer Lexer;
 
 struct Lexer {
   const char *src;
-  const char *file_path;
+  char *file_path;
   size_t len;
   size_t pos;
   size_t line;
@@ -76,5 +75,3 @@ static inline bool l_check(Lexer *l, char c) {
 
 void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,
                 Arena *trivia_arena, const Source *src, InternTable *table);
-
-#endif // LEXER_H
