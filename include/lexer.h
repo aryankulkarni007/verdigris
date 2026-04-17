@@ -75,3 +75,5 @@ static inline bool l_check(Lexer *l, char c) {
 
 void lexer_init(Lexer *l, Arena *token_arena, Arena *string_arena,
                 Arena *trivia_arena, const Source *src, InternTable *table);
+
+static Token lex_string(Lexer *l);

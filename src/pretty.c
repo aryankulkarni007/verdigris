@@ -171,7 +171,8 @@ void print_expr(cst_e *expr) {
 
   case CST_UNARY_EXPR: {
     UNARY_E_CSTN *e = (UNARY_E_CSTN *)expr;
-    fprintf(out, "(%s ", intern_lookup(g_intern, e->op->id));
+    const char *op_str = tk_name(e->op->type);
+    fprintf(out, "(%s ", op_str);
     print_expr(e->expr);
     fprintf(out, ")");
     break;

@@ -545,20 +545,20 @@ users.reset();  -- all handles invalidated
 
 ```
 std/
-  arena.ri       -- Arena allocator
-  heap.ri        -- Heap allocator
-  vec.ri         -- Dynamic array
-  string.ri      -- UTF-8 string operations
-  map.ri         -- Hash map
-  set.ri         -- Hash set
-  io.ri          -- File and console I/O
-  fmt.ri         -- Formatting and printing
-  math.ri        -- Mathematical functions
-  os.ri          -- Operating system interface
-  thread.ri      -- Concurrency primitives
-  channel.ri     -- CSP-style channels
-  json.ri        -- JSON parsing/serialization
-  test.ri        -- Testing framework
+  arena.vg       -- Arena allocator
+  heap.vg        -- Heap allocator
+  vec.vg         -- Dynamic array
+  string.vg      -- UTF-8 string operations
+  map.vg         -- Hash map
+  set.vg         -- Hash set
+  io.vg          -- File and console I/O
+  fmt.vg         -- Formatting and printing
+  math.vg        -- Mathematical functions
+  os.vg          -- Operating system interface
+  thread.vg      -- Concurrency primitives
+  channel.vg     -- CSP-style channels
+  json.vg        -- JSON parsing/serialization
+  test.vg        -- Testing framework
 ```
 
 ## Philosophy

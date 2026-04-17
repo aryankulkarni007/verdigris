@@ -1,24 +1,55 @@
-#pragma once
+#ifndef PARSER_H
+#define PARSER_H
 
+#include "arena.h"
 #include "cst.h"
 #include "diagnostic.h"
 #include "lexer.h"
-#include "token.h"
 
 typedef struct {
   TStream tokens;
-  size_t pos; // current token index
+  size_t pos;
+  const char *file_path;
+  const char *source;
   DiagBag *diags;
-  Arena *ast_arena;
-  bool panic_mode; // error recovery flag
+  Arena *cst_arena;
+  InternTable *intern;
+  bool panic_mode;
 } Parser;
 
-// clang-format off
-static inline Token *p_current(Parser *p) { return &p->tokens.data[p->pos]; }
-static inline Token *p_peek(Parser *p) { return &p->tokens.data[p->pos + 1]; }
-static inline Token *p_advance(Parser *p) { return &p->tokens.data[p->pos++]; }
-static inline bool p_check(Parser *p, TK_T type) { return p_current(p)->type == type; }
-static inline bool p_match(Parser *p, TK_T type) { if (p_check(p, type)) { p_advance(p); return true; } return false; }
-static Token *p_expect(Parser *p, TK_T type, const char *expected);
+#define PRECEDENCE(X)                                                          \
+  X(ASSIGN)         /* = += -= *= /= %= */                                     \
+  X(PIPELINE)       /* >> */                                                   \
+  X(LOGIC_OR)       /* || */                                                   \
+  X(LOGIC_AND)      /* && */                                                   \
+  X(EQUALITY)       /* == != */                                                \
+  X(COMPARISON)     /* < > <= >= */                                            \
+  X(RANGE)          /* .. ..= */                                               \
+  X(ADDITIVE)       /* + - */                                                  \
+  X(MUTLIPLICATIVE) /* *  % */                                                 \
+  X(CAST)           /* as */                                                   \
+  X(UNARY)          /* - ! & * */                                              \
+  X(ERROR_PROP)     /* ! */                                                    \
+  X(INDEXING)       /* () [] . */                                              \
+  X(PRIMARY)        /* i.e in parse_primary */
 
-cst_d *parse(Parser *p, TStream tokens, Arena *cst_arena, DiagBag *diags);
+typedef enum {
+#define AS_ENUM(name) name,
+  PRECEDENCE(AS_ENUM)
+#undef AS_ENUM
+} PRECENDENCE;
+
+void parser_init(Parser *p, TStream tokens, Arena *cst_arena, DiagBag *diags,
+                 InternTable *intern, const char *file_path,
+                 const char *source);
+
+cst_d *parse(Parser *p);
+
+cst_e *parse_expr(Parser *p);
+cst_s *parse_stmt(Parser *p);
+cst_d *parse_decl(Parser *p);
+cst_d *parse_module(Parser *p);
+
+static cst_e *parse_primary(Parser *p);
+
+#endif

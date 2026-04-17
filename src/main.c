@@ -6,6 +6,8 @@
 #include "../include/lexer.h"
 #include "../include/main.h"
 #include "../include/vector.h"
+#include "parser.h"
+#include "pretty.h"
 
 #define error(x)                                                               \
   do {                                                                         \
@@ -68,6 +70,8 @@ int main(int argc, char *argv[]) {
   Arena token_arena = arena_init(1LL << 30);
   Arena trivia_arena = arena_init(1LL << 30);
   Arena string_arena = arena_init(1LL << 30);
+  Arena diag_arena = arena_init(1LL << 30);
+  Arena cst_arena = arena_init(1LL << 30);
 
   Lexer lexer;
   InternTable table = intern_init(&string_arena);
@@ -78,10 +82,27 @@ int main(int argc, char *argv[]) {
   // intern_dump(&table);
 
   // super cool macro
-  vec_for_each_struct(stream, t) print_token(t, src.buffer);
+  // vec_for_each_struct(stream, t) print_token(t, src.buffer);
+
+  DiagBag diags = diag_init(&diag_arena);
+  Parser parser;
+  parser_init(&parser, stream, &cst_arena, &diags, &table, src.file_path,
+              src.buffer);
+
+  cst_d *module = parse(&parser);
+  if (!diag_ok(&diags)) {
+    diag_print_all(&diags, src.buffer, stderr);
+    return 1;
+  }
+
+  cst_pretty_init(stderr, &table);
+  print_decl(module);
+  putc('\n', stderr);
 
   arena_destroy(&token_arena);
   arena_destroy(&trivia_arena);
   arena_destroy(&string_arena);
+  arena_destroy(&diag_arena);
+  arena_destroy(&cst_arena);
   return 0;
 }

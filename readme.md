@@ -15,9 +15,9 @@ Goal: Rock-solid infrastructure before parsing
 
 Goal: Parse source into concrete syntax tree preserving all trivia
 
-- ( ) CST node definitions - One struct per syntactic category
-- ( ) CST parser - Recursive descent over token stream
-- ( ) CST pretty printer - Verify round-trip fidelity
+- (X) CST node definitions - One struct per syntactic category
+- (~) CST parser - Recursive descent over token stream
+- (~) CST pretty printer - Verify round-trip fidelity
 
 ## Phase 2: AST Lowering
 
